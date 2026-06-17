@@ -1,0 +1,262 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Privacy Policy | EstateSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .privacy-hero {
+        background: linear-gradient(135deg, #0b3d2e, #1f8f5f);
+        color: white;
+        padding: 80px 0;
+        text-align: center;
+    }
+    .privacy-hero h1 { font-size: 3rem; font-weight: 700; }
+    .privacy-hero p { font-size: 1.1rem; opacity: 0.9; }
+
+    .privacy-container { padding: 60px 0; }
+    .privacy-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    .privacy-sidebar {
+        background: linear-gradient(160deg, #075e35, #1fa463);
+        color: white;
+        padding: 40px;
+        height: 100%;
+    }
+    .privacy-sidebar h4 { font-weight: 600; margin-bottom: 20px; }
+    .privacy-sidebar p { opacity: 0.9; font-size: 0.95rem; line-height: 1.7; }
+    .privacy-sidebar .icon-box {
+        width: 60px;
+        height: 60px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .privacy-content {
+        padding: 40px;
+    }
+    .privacy-content h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #111827;
+    }
+    body[data-bs-theme="dark"] .privacy-content h2 { color: white; }
+
+    .privacy-content .last-updated {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+    }
+
+    .policy-section {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    body[data-bs-theme="dark"] .policy-section { border-color: #374151; }
+
+    .policy-section:last-child { border-bottom: none; }
+
+    .policy-section h5 {
+        color: #15915a;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .policy-section h5 i { font-size: 1rem; }
+
+    .policy-section p, .policy-section li {
+        color: #4b5563;
+        line-height: 1.8;
+        font-size: 0.95rem;
+    }
+    body[data-bs-theme="dark"] .policy-section p,
+    body[data-bs-theme="dark"] .policy-section li { color: #d1d5db; }
+
+    .policy-section ul { padding-left: 20px; }
+    .policy-section li { margin-bottom: 8px; }
+
+    .btn-accept {
+        background: #15915a;
+        border: none;
+        padding: 14px 40px;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+    .btn-accept:hover {
+        background: #0d7547;
+        transform: translateY(-2px);
+    }
+
+    .back-home {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+    }
+    .back-home a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #15915a;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(21, 145, 90, 0.3);
+        transition: all 0.3s;
+    }
+    .back-home a:hover {
+        background: #0d7547;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(21, 145, 90, 0.4);
+    }
+
+    @media(max-width: 768px) {
+        .privacy-hero h1 { font-size: 2rem; }
+        .privacy-sidebar { padding: 30px; }
+        .privacy-content { padding: 30px 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="privacy-hero">
+    <div class="container">
+        <h1><i class="fa-solid fa-shield-halved me-3"></i>Privacy Policy</h1>
+        <p>Your data security and privacy are our top priority.</p>
+    </div>
+</section>
+
+<div class="container privacy-container">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-11">
+            <div class="card privacy-card">
+                <div class="row g-0">
+                    <!-- Sidebar -->
+                    <div class="col-lg-4">
+                        <div class="privacy-sidebar">
+                            <div class="icon-box"><i class="fa-solid fa-lock"></i></div>
+                            <h4>Data Protection Commitment</h4>
+                            <p>At EstateSync, we are committed to protecting your personal information. This policy outlines how we collect, use, and safeguard your data.</p>
+
+                            <div class="mt-4 pt-4" style="border-top: 1px solid rgba(255,255,255,0.2);">
+                                <h6 class="fw-bold mb-3">Quick Links</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><a href="/" class="text-white text-decoration-none"><i class="fa-solid fa-home me-2"></i>Home</a></li>
+                                    <li class="mb-2"><a href="/map" class="text-white text-decoration-none"><i class="fa-solid fa-map me-2"></i>Live Map</a></li>
+                                    <li class="mb-2"><a href="/contact" class="text-white text-decoration-none"><i class="fa-solid fa-envelope me-2"></i>Contact Us</a></li>
+                                    <li><a href="/login" class="text-white text-decoration-none"><i class="fa-solid fa-user me-2"></i>Login</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="col-lg-8">
+                        <div class="privacy-content">
+                            <h2>Privacy Policy</h2>
+                            <p class="last-updated"><i class="fa-regular fa-calendar me-2"></i>Last updated: June 12, 2026</p>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-circle-info"></i>1. Overview</h5>
+                                <p>EstateSync is an integrated Housing Society and Plot Management System designed to manage residents, plots, payments, and administrative operations. We are committed to protecting the privacy and security of all users including residents, agents, and society administrators.</p>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-database"></i>2. Information We Collect</h5>
+                                <p>To provide smooth system functionality, EstateSync collects the following data:</p>
+                                <ul>
+                                    <li>Full Name and Contact Information</li>
+                                    <li>Email Address for account authentication and notifications</li>
+                                    <li>User Role (Resident, Agent, or Administrator)</li>
+                                    <li>Society and plot-related records (if applicable)</li>
+                                    <li>Transaction and payment history within the system</li>
+                                </ul>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-bullseye"></i>3. Purpose of Data Usage</h5>
+                                <p>The collected information is used strictly for system operations including:</p>
+                                <ul>
+                                    <li>Managing user authentication and account access</li>
+                                    <li>Maintaining society records and plot allocations</li>
+                                    <li>Processing and tracking payments securely</li>
+                                    <li>Generating reports for administrators</li>
+                                    <li>Improving system performance and user experience</li>
+                                </ul>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-shield-halved"></i>4. Data Protection & Security</h5>
+                                <p>EstateSync implements secure database management practices to protect user data from unauthorized access, alteration, or loss. Sensitive information such as passwords is stored in encrypted form within the system.</p>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-user-shield"></i>5. Role-Based Access Control</h5>
+                                <p>Access to data within EstateSync is restricted based on user roles:</p>
+                                <ul>
+                                    <li><strong>Residents:</strong> Can only view their own profile, payments, and plot details</li>
+                                    <li><strong>Agents:</strong> Can manage assigned plots and related records</li>
+                                    <li><strong>Administrators:</strong> Have full system access including user and financial management</li>
+                                </ul>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-share-nodes"></i>6. Data Sharing Policy</h5>
+                                <p>EstateSync does not sell, rent, or share user data with third-party organizations. Data is only shared internally within the system for operational requirements.</p>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-user-check"></i>7. User Rights</h5>
+                                <ul>
+                                    <li>View and update personal profile information</li>
+                                    <li>Request correction of incorrect data</li>
+                                    <li>Request account deactivation (admin approval required)</li>
+                                </ul>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-clipboard-list"></i>8. System Logs</h5>
+                                <p>For security and monitoring purposes, EstateSync maintains system logs including login attempts, transactions, and administrative actions. These logs are used only for auditing and system protection.</p>
+                            </div>
+
+                            <div class="policy-section">
+                                <h5><i class="fa-solid fa-envelope"></i>9. Contact Information</h5>
+                                <p>For any privacy-related concerns, users may contact:</p>
+                                <p class="mb-1"><strong>Email:</strong> support@estatesync.com</p>
+                                <p><strong>System:</strong> EstateSync Administration Panel</p>
+                            </div>
+
+                            <div class="text-center mt-5">
+                                <a href="/" class="btn btn-accept btn-success text-white">
+                                    <i class="fa-solid fa-check me-2"></i>Accept & Continue to Home
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Back to Home Button -->
+<div class="back-home">
+    <a href="/"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+</div>
+{% endblock %}

@@ -1,0 +1,817 @@
+{% extends 'base.html' %}
+
+{% block title %}Interactive Society Map | EstateSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .map-page {
+        background: #f5f5f0;
+        min-height: 100vh;
+        padding: 20px 0 60px;
+    }
+    body[data-bs-theme="dark"] .map-page {
+        background: #0f172a;
+    }
+
+    /* Header */
+    .map-header {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .map-header h2 {
+        font-weight: 800;
+        color: #1f2937;
+        font-size: 1.8rem;
+    }
+    body[data-bs-theme="dark"] .map-header h2 {
+        color: #f9fafb;
+    }
+    .map-header p {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    /* Legend */
+    .map-legend-bar {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        padding: 10px 25px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 0.8rem;
+    }
+    body[data-bs-theme="dark"] .map-legend-bar {
+        background: #1f2937;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+    }
+    .legend-box {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        border: 2px solid;
+    }
+    .legend-available { background: #86efac; border-color: #22c55e; }
+    .legend-sold { background: #fca5a5; border-color: #ef4444; }
+    .legend-uc { background: #fcd34d; border-color: #f59e0b; }
+    .legend-park { background: #15803d; border-color: #14532d; }
+    .legend-water { background: #0ea5e9; border-color: #0369a1; }
+    .legend-road { background: #6b7280; border-color: #374151; }
+    .legend-club { background: #7c3aed; border-color: #5b21b6; }
+
+    /* Master Plan Container */
+    .master-plan {
+        background: #e5e7eb;
+        border-radius: 24px;
+        padding: 35px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+        position: relative;
+        overflow: hidden;
+        border: 3px solid #d1d5db;
+    }
+    body[data-bs-theme="dark"] .master-plan {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    /* Perimeter Road */
+    .perimeter-road {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border: 25px solid #9ca3af;
+        border-radius: 24px;
+        pointer-events: none;
+        z-index: 1;
+    }
+    .perimeter-label {
+        position: absolute;
+        background: #fbbf24;
+        color: #92400e;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 3px 12px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+    }
+    .pl-top { top: 5px; left: 50%; transform: translateX(-50%); }
+    .pl-bottom { bottom: 5px; left: 50%; transform: translateX(-50%); }
+    .pl-left { left: 5px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+    .pl-right { right: 5px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+
+    /* Internal Roads */
+    .road-h {
+        height: 30px;
+        background: #6b7280;
+        margin: 15px 0;
+        border-radius: 4px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .road-v {
+        width: 30px;
+        background: #6b7280;
+        border-radius: 4px;
+        position: relative;
+    }
+    .road-label {
+        color: #fbbf24;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+    }
+
+    /* Roundabout */
+    .roundabout {
+        width: 80px;
+        height: 80px;
+        background: #22c55e;
+        border-radius: 50%;
+        border: 8px solid #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 5;
+    }
+    .roundabout::after {
+        content: '🌳';
+        font-size: 2rem;
+    }
+
+    /* Block Styling */
+    .block-area {
+        background: #f9fafb;
+        border-radius: 16px;
+        padding: 20px;
+        border: 2px solid #d1d5db;
+        position: relative;
+        height: 100%;
+    }
+    body[data-bs-theme="dark"] .block-area {
+        background: #1f2937;
+        border-color: #4b5563;
+    }
+    .block-badge {
+        position: absolute;
+        top: -12px;
+        left: 15px;
+        padding: 5px 18px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    .badge-a { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    .badge-b { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+    .badge-c { background: linear-gradient(135deg, #059669, #10b981); }
+    .badge-d { background: linear-gradient(135deg, #d97706, #f59e0b); }
+
+    .block-street-name {
+        text-align: center;
+        font-size: 0.65rem;
+        color: #9ca3af;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        margin-top: 8px;
+    }
+
+    /* Plot Grid - Different layouts per block */
+    .plots-row {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+    .plots-row.reverse {
+        flex-direction: row-reverse;
+    }
+    .plot {
+        flex: 1;
+        min-height: 65px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid;
+        position: relative;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+    .plot:hover {
+        transform: scale(1.08) translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        z-index: 20;
+    }
+    .plot .p-num {
+        font-size: 0.9rem;
+        font-weight: 800;
+    }
+    .plot .p-size {
+        font-size: 0.6rem;
+        opacity: 0.85;
+    }
+    .plot .p-price {
+        font-size: 0.55rem;
+        margin-top: 1px;
+    }
+
+    /* Plot Status Colors */
+    .p-available {
+        background: linear-gradient(135deg, #bbf7d0, #86efac);
+        border-color: #22c55e;
+        color: #14532d;
+    }
+    .p-sold {
+        background: linear-gradient(135deg, #fecaca, #fca5a5);
+        border-color: #ef4444;
+        color: #7f1d1d;
+    }
+    .p-sold::after {
+        content: 'SOLD';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-25deg);
+        font-size: 0.75rem;
+        font-weight: 900;
+        color: rgba(127, 29, 29, 0.25);
+        letter-spacing: 2px;
+    }
+    .p-uc {
+        background: linear-gradient(135deg, #fde68a, #fcd34d);
+        border-color: #f59e0b;
+        color: #78350f;
+    }
+    .p-uc::after {
+        content: '⚠';
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        font-size: 0.65rem;
+    }
+
+    /* Corner plots are larger */
+    .plot.corner {
+        min-height: 75px;
+        border-width: 3px;
+    }
+    .plot.corner .p-num {
+        font-size: 1rem;
+    }
+
+    /* Park / Amenity */
+    .amenity-box {
+        border-radius: 16px;
+        padding: 20px;
+        color: white;
+        text-align: center;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        border: 3px solid;
+    }
+    .amenity-box::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+    .amenity-box i {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 2;
+    }
+    .amenity-box h5 {
+        font-weight: 800;
+        font-size: 1rem;
+        margin: 0;
+        position: relative;
+        z-index: 2;
+    }
+    .amenity-box p {
+        font-size: 0.75rem;
+        opacity: 0.9;
+        margin: 5px 0 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .park-central {
+        background: linear-gradient(135deg, #15803d, #16a34a);
+        border-color: #14532d;
+    }
+    .park-lake {
+        background: linear-gradient(135deg, #0369a1, #0ea5e9);
+        border-color: #075985;
+    }
+    .clubhouse {
+        background: linear-gradient(135deg, #5b21b6, #7c3aed);
+        border-color: #4c1d95;
+    }
+    .sports {
+        background: linear-gradient(135deg, #be123c, #e11d48);
+        border-color: #881337;
+    }
+
+    /* Entrance Plaza */
+    .entrance-plaza {
+        background: linear-gradient(135deg, #4338ca, #6366f1);
+        border-radius: 16px;
+        padding: 15px;
+        color: white;
+        text-align: center;
+        border: 3px solid #3730a3;
+        position: relative;
+    }
+    .entrance-plaza i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 5px;
+    }
+    .entrance-plaza strong {
+        font-size: 0.9rem;
+        font-weight: 800;
+    }
+    .entrance-plaza small {
+        display: block;
+        font-size: 0.7rem;
+        opacity: 0.9;
+    }
+
+    /* Median Strip */
+    .median-strip {
+        height: 12px;
+        background: repeating-linear-gradient(90deg, #fbbf24, #fbbf24 10px, #6b7280 10px, #6b7280 20px);
+        border-radius: 2px;
+        margin: 4px 0;
+    }
+
+    /* Responsive */
+    @media(max-width: 992px) {
+        .master-plan { padding: 20px; }
+        .perimeter-road { border-width: 15px; }
+        .plot { min-height: 50px; font-size: 0.6rem; }
+        .plot .p-num { font-size: 0.75rem; }
+        .roundabout { width: 50px; height: 50px; }
+        .roundabout::after { font-size: 1.3rem; }
+    }
+    @media(max-width: 576px) {
+        .plots-row { gap: 3px; }
+        .plot { min-height: 40px; }
+        .plot .p-num { font-size: 0.65rem; }
+        .plot .p-size, .plot .p-price { display: none; }
+        .block-area { padding: 12px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-page">
+    <div class="container-fluid px-4">
+        <!-- Header -->
+        <div class="map-header">
+            <h2><i class="fa-solid fa-map-location-dot me-2" style="color: #15915a;"></i>EstateSync Master Plan</h2>
+            <p>Premium Gated Community Layout — 4 Blocks, Central Lake, Clubhouse & Sports Complex</p>
+        </div>
+
+        <!-- Legend -->
+        <div class="map-legend-bar">
+            <div class="legend-item"><div class="legend-box legend-available"></div> Available</div>
+            <div class="legend-item"><div class="legend-box legend-sold"></div> Sold</div>
+            <div class="legend-item"><div class="legend-box legend-uc"></div> Under Construction</div>
+            <div class="legend-item"><div class="legend-box legend-park"></div> Parks</div>
+            <div class="legend-item"><div class="legend-box legend-water"></div> Lake</div>
+            <div class="legend-item"><div class="legend-box legend-club"></div> Amenities</div>
+            <div class="legend-item"><div class="legend-box legend-road"></div> Roads</div>
+        </div>
+
+        <!-- Master Plan -->
+        <div class="master-plan">
+            <div class="perimeter-road">
+                <span class="perimeter-label pl-top">RING ROAD NORTH</span>
+                <span class="perimeter-label pl-bottom">RING ROAD SOUTH</span>
+                <span class="perimeter-label pl-left">RING ROAD WEST</span>
+                <span class="perimeter-label pl-right">RING ROAD EAST</span>
+            </div>
+
+            <!-- TOP ROW -->
+            <div class="row g-4 position-relative" style="z-index: 5;">
+                <!-- BLOCK A - ROSE (Top Left) -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="block-area">
+                        <div class="block-badge badge-a"><i class="fa-solid fa-rose me-1"></i> Block A — Rose</div>
+                        <div class="block-street-name">Rose Boulevard · Premium Residential</div>
+                        
+                        <!-- Row 1 (facing road) -->
+                        <div class="plots-row">
+                            {% for plot in plots_data[1][:5] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'A - Rose')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="plots-row reverse">
+                            {% for plot in plots_data[1][5:] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'A - Rose')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CENTRAL PARK (Top Center) -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="amenity-box park-central h-100">
+                        <i class="fa-solid fa-tree"></i>
+                        <h5>Central Park</h5>
+                        <p>5 Acres · Jogging Track · Playground · Botanical Garden</p>
+                    </div>
+                </div>
+
+                <!-- BLOCK B - JASMINE (Top Right) -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="block-area">
+                        <div class="block-badge badge-b"><i class="fa-solid fa-leaf me-1"></i> Block B — Jasmine</div>
+                        <div class="block-street-name">Jasmine Avenue · Family Residential</div>
+                        
+                        <div class="plots-row">
+                            {% for plot in plots_data[2][:4] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'B - Jasmine')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="plots-row reverse">
+                            {% for plot in plots_data[2][4:] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'B - Jasmine')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ENTRANCE PLAZA (Top Far Right) -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="entrance-plaza h-100 d-flex flex-column justify-content-center">
+                        <i class="fa-solid fa-torii-gate"></i>
+                        <strong>MAIN ENTRANCE</strong>
+                        <small>24/7 Security · Visitor Parking</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HORIZONTAL ROAD WITH MEDIAN -->
+            <div class="row position-relative" style="z-index: 5;">
+                <div class="col-12">
+                    <div class="road-h">
+                        <span class="road-label">◀ GRAND AVENUE ▶</span>
+                    </div>
+                    <div class="median-strip"></div>
+                </div>
+            </div>
+
+            <!-- MIDDLE ROW -->
+            <div class="row g-4 position-relative" style="z-index: 5;">
+                <!-- LAKE VIEW (Middle Left) -->
+                <div class="col-lg-2 col-md-4">
+                    <div class="amenity-box park-lake h-100">
+                        <i class="fa-solid fa-water"></i>
+                        <h5>Lake View</h5>
+                        <p>Artificial Lake · Fountain · Boating</p>
+                    </div>
+                </div>
+
+                <!-- ROUNDABOUT (Center) -->
+                <div class="col-lg-2 col-md-4 d-flex align-items-center justify-content-center">
+                    <div class="roundabout"></div>
+                </div>
+
+                <!-- CLUBHOUSE (Middle Right) -->
+                <div class="col-lg-3 col-md-4">
+                    <div class="amenity-box clubhouse h-100">
+                        <i class="fa-solid fa-glass-cheers"></i>
+                        <h5>Country Club</h5>
+                        <p>Pool · Gym · Banquet Hall · Restaurant</p>
+                    </div>
+                </div>
+
+                <!-- SPORTS COMPLEX (Middle Far Right) -->
+                <div class="col-lg-2 col-md-6">
+                    <div class="amenity-box sports h-100">
+                        <i class="fa-solid fa-basketball"></i>
+                        <h5>Sports Complex</h5>
+                        <p>Tennis · Cricket · Football</p>
+                    </div>
+                </div>
+
+                <!-- MOSQUE (Middle Far Right) -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="amenity-box" style="background: linear-gradient(135deg, #1e40af, #3b82f6); border-color: #1e3a8a;">
+                        <i class="fa-solid fa-mosque"></i>
+                        <h5>Jamia Masjid</h5>
+                        <p>Community Mosque · Capacity 500</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HORIZONTAL ROAD -->
+            <div class="row position-relative" style="z-index: 5;">
+                <div class="col-12">
+                    <div class="road-h">
+                        <span class="road-label">◀ PARK LANE ▶</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM ROW -->
+            <div class="row g-4 position-relative" style="z-index: 5;">
+                <!-- BLOCK C - LILY (Bottom Left) -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="block-area">
+                        <div class="block-badge badge-c"><i class="fa-solid fa-sun me-1"></i> Block C — Lily</div>
+                        <div class="block-street-name">Lily Lane · Executive Villas</div>
+                        
+                        <div class="plots-row">
+                            {% for plot in plots_data[3][:3] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'C - Lily')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="plots-row reverse">
+                            {% for plot in plots_data[3][3:6] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'C - Lily')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOCK D - ORCHID (Bottom Right) -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="block-area">
+                        <div class="block-badge badge-d"><i class="fa-solid fa-crown me-1"></i> Block D — Orchid</div>
+                        <div class="block-street-name">Orchid Drive · Luxury Estate</div>
+                        
+                        <div class="plots-row">
+                            {% for plot in plots_data[4][:3] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'D - Orchid')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="plots-row reverse">
+                            {% for plot in plots_data[4][3:] %}
+                            <div class="plot {{ 'corner' if loop.first or loop.last else '' }} p-{{ plot.Status|lower|replace('under-construction', 'uc') }}" 
+                                 onclick="showPlotDetails('{{ plot.Plot_ID }}', '{{ plot.Plot_Number }}', '{{ plot.Status }}', '{{ plot.Size_Marla }}', '{{ plot.Total_Price }}', '{{ plot.Category }}', 'D - Orchid')"
+                                 title="Plot {{ plot.Plot_Number }}">
+                                <span class="p-num">{{ plot.Plot_Number }}</span>
+                                <span class="p-size">{{ plot.Size_Marla }}M</span>
+                                <span class="p-price">Rs.{{ "{:,.0f}".format(plot.Total_Price/100000) }}L</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SERVICE AREA (Bottom Far Right) -->
+                <div class="col-lg-4 col-md-12">
+                    <div class="row g-3 h-100">
+                        <div class="col-6">
+                            <div class="amenity-box" style="background: linear-gradient(135deg, #475569, #64748b); border-color: #334155; height: 100%;">
+                                <i class="fa-solid fa-truck"></i>
+                                <h5>Service Area</h5>
+                                <p>Garbage · Maintenance</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="amenity-box" style="background: linear-gradient(135deg, #a16207, #ca8a04); border-color: #854d0e; height: 100%;">
+                                <i class="fa-solid fa-school"></i>
+                                <h5>School</h5>
+                                <p>Future Development</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Info -->
+            <div class="row mt-3 position-relative" style="z-index: 5;">
+                <div class="col-6">
+                    <span style="font-size: 0.7rem; color: #6b7280; font-weight: 600;">
+                        <i class="fa-solid fa-location-dot me-1"></i> EstateSync Housing Society, Gujranwala · Master Plan v2.0
+                    </span>
+                </div>
+                <div class="col-6 text-end">
+                    <span style="font-size: 0.7rem; color: #6b7280;">
+                        Scale: 1:500 · Total Area: 25 Kanals
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plot Details Modal -->
+
+<div class="modal fade" id="plotModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #15915a, #0d7547); color: white;">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-house-chimney me-2"></i>Plot Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-6"><strong>Plot Number:</strong> <span id="modalPlotNum"></span></div>
+                    <div class="col-6"><strong>Block:</strong> <span id="modalBlock"></span></div>
+                    <div class="col-6"><strong>Size:</strong> <span id="modalSize"></span> Marla</div>
+                    <div class="col-6"><strong>Category:</strong> <span id="modalCategory"></span></div>
+                    <div class="col-6"><strong>Status:</strong> <span id="modalStatus"></span></div>
+                    <div class="col-6"><strong>Price:</strong> Rs. <span id="modalPrice"></span></div>
+                </div>
+            </div>
+           <div class="modal-footer flex-column">
+                
+                {% if session.role == 'Admin' %}
+                <div class="w-100 d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <select id="adminStatusChange" class="form-select form-select-sm d-inline-block w-auto">
+                            <option value="AVAILABLE">Available</option>
+                            <option value="SOLD">Sold</option>
+                            <option value="UNDER-CONSTRUCTION">Under Construction</option>
+                        </select>
+                        <button class="btn btn-sm btn-success ms-2" onclick="updatePlotFromModal()">Update</button>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+                {% endif %}
+
+                {% if session.role == 'Resident' %}
+                <div id="residentBookingSection" style="display:none;" class="w-100 bg-light p-3 rounded-3 mt-2 text-start">
+                    <form action="/request_booking" method="POST">
+                        <input type="hidden" name="plot_id" id="bookPlotId">
+                        
+                        <label class="form-label fw-bold text-success mb-1"><i class="fa-solid fa-cart-shopping me-1"></i> Ready to Book?</label>
+                        <p class="small text-muted mb-2">Select your installment plan below to instantly secure this property.</p>
+                        
+                        <select name="plan_id" class="form-select form-select-sm mb-3" required>
+                            <option value="" disabled selected>-- Select Installment Plan --</option>
+                            {% for plan in plans %}
+                            <option value="{{ plan.Plan_ID }}">{{ plan.Plan_Name }} ({{ plan.Down_Payment_Percentage }}% Down Payment)</option>
+                            {% endfor %}
+                        </select>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success flex-grow-1 fw-bold">Confirm Booking</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div id="defaultCloseBtn" class="w-100 text-end">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+                {% endif %}
+
+                {% if not session.loggedin %}
+                <div class="w-100 d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="fa-solid fa-lock me-1"></i> Login to book this plot</small>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPlotId = null;
+
+function showPlotDetails(id, num, status, size, price, category, block) {
+    currentPlotId = id;
+    document.getElementById('modalPlotNum').textContent = num;
+    document.getElementById('modalBlock').textContent = block;
+    document.getElementById('modalSize').textContent = size;
+    document.getElementById('modalCategory').textContent = category;
+    document.getElementById('modalStatus').textContent = status;
+    document.getElementById('modalPrice').textContent = parseFloat(price).toLocaleString();
+    
+    const statusBadge = document.getElementById('modalStatus');
+    statusBadge.className = 'badge ' + (status === 'AVAILABLE' ? 'bg-success' : status === 'SOLD' ? 'bg-danger' : 'bg-warning text-dark');
+    
+    const adminSelect = document.getElementById('adminStatusChange');
+    if (adminSelect) {
+        adminSelect.value = status;
+    }
+    // Show booking form ONLY if user is a resident AND plot is AVAILABLE
+    const bookingSection = document.getElementById('residentBookingSection');
+    const defaultClose = document.getElementById('defaultCloseBtn');
+    
+    if(bookingSection) {
+        if(status === 'AVAILABLE') {
+            bookingSection.style.display = 'block';
+            defaultClose.style.display = 'none';
+            document.getElementById('bookPlotId').value = id; // Give python the Plot ID
+        } else {
+            bookingSection.style.display = 'none';
+            defaultClose.style.display = 'block';
+        }
+    }
+    new bootstrap.Modal(document.getElementById('plotModal')).show();
+}
+
+function updatePlotFromModal() {
+    if (!currentPlotId) return;
+    const newStatus = document.getElementById('adminStatusChange').value;
+    updatePlotStatus(currentPlotId, newStatus);
+}
+
+function updatePlotStatus(plotId, newStatus) {
+    if(!confirm('Change plot status to ' + newStatus + '?')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    fetch('/update_plot/' + plotId, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.success) {
+            alert('Plot updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        alert('Error: ' + err);
+    });
+}
+</script>
+{% endblock %}

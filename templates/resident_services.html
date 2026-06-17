@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}My Services & Maintenance | EstateSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #15915a, #0d7547);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+    }
+    .section-card { 
+        border: none; 
+        border-radius: 15px; 
+        overflow: hidden; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+    }
+    .section-header { 
+        background: #15915a; 
+        color: white; 
+        padding: 15px 20px; 
+        font-weight: 600; 
+    }
+    .badge-unpaid { background: #ef4444; color: white; }
+    .badge-paid { background: #10b981; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="fw-bold mb-2"><i class="fa-solid fa-wrench me-2"></i>Maintenance & Services</h2>
+                <p class="mb-0 opacity-75">View and pay your monthly society maintenance bills.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="/resident" class="btn btn-light fw-bold">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card section-card">
+        <div class="section-header">
+            <i class="fa-solid fa-file-invoice-dollar me-2"></i>My Service Bills
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Bill ID</th>
+                        <th>Property</th>
+                        <th>Service Type</th>
+                        <th>Billing Month</th>
+                        <th>Due Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                    <tr>
+                        <td class="fw-bold">#{{ bill.Bill_ID }}</td>
+                        <td>Block {{ bill.Block_Name }} - Plot {{ bill.Plot_Number }}</td>
+                        <td>{{ bill.Service_Name }}</td>
+                        <td>{{ bill.Billing_Month }}</td>
+                        <td>{{ bill.Due_Date }}</td>
+                        <td class="fw-bold text-dark">Rs. {{ "{:,.0f}".format(bill.Amount_Due) }}</td>
+                        <td>
+                            <span class="badge {% if bill.Issue_Status == 'PAID' %}badge-paid{% else %}badge-unpaid{% endif %} px-3 py-2">
+                                {{ bill.Issue_Status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if bill.Issue_Status == 'UNPAID' %}
+                            <form action="/pay_bill/{{ bill.Bill_ID }}" method="POST" style="display:inline;" onsubmit="return confirm('Confirm payment for this service bill?');">
+                                <button type="submit" class="btn btn-sm btn-success fw-bold">
+                                    <i class="fa-solid fa-credit-card me-1"></i> Pay Now
+                                </button>
+                            </form>
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-secondary fw-bold" disabled>
+                                <i class="fa-solid fa-check-circle me-1"></i> Cleared
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-secondary">
+                            <i class="fa-solid fa-file-circle-check fa-2x mb-3 d-block"></i>
+                            <h5 class="fw-bold">No Pending Bills</h5>
+                            <p class="mb-0">You have no maintenance or service bills at this time.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

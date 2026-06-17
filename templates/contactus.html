@@ -1,0 +1,224 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Contact Us | EstateSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-hero {
+        background: linear-gradient(135deg, #0b3d2e, #1f8f5f);
+        color: white;
+        padding: 80px 0;
+        text-align: center;
+    }
+    .contact-hero h1 { font-size: 3rem; font-weight: 700; }
+    .contact-hero p { font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 15px auto 0; }
+
+    .contact-container { padding: 60px 0; }
+    .contact-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+        height: 100%;
+    }
+    .contact-info-panel {
+        background: linear-gradient(160deg, #075e35, #1fa463);
+        color: white;
+        padding: 40px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    .info-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .info-item h5 { margin: 0 0 5px; font-size: 1rem; font-weight: 600; }
+    .info-item p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
+
+    .form-panel { padding: 40px; }
+    .form-floating > .form-control,
+    .form-floating > .form-select {
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+    }
+    .form-floating > .form-control:focus,
+    .form-floating > .form-select:focus {
+        border-color: #15915a;
+        box-shadow: 0 0 0 3px rgba(21, 145, 90, 0.1);
+    }
+    .btn-submit {
+        background: #15915a;
+        border: none;
+        padding: 14px;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+    .btn-submit:hover {
+        background: #0d7547;
+        transform: translateY(-2px);
+    }
+
+    .back-home {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+    }
+    .back-home a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #15915a;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(21, 145, 90, 0.3);
+        transition: all 0.3s;
+    }
+    .back-home a:hover {
+        background: #0d7547;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(21, 145, 90, 0.4);
+    }
+
+    @media(max-width: 768px) {
+        .contact-hero h1 { font-size: 2rem; }
+        .contact-info-panel { padding: 30px; }
+        .form-panel { padding: 30px 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="contact-hero">
+    <div class="container">
+        <h1><i class="fa-solid fa-headset me-3"></i>Get in Touch</h1>
+        <p>Have questions about plots, payments, or society management? We're here to help you 24/7.</p>
+    </div>
+</section>
+
+<div class="container contact-container">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-10">
+            <div class="card contact-card">
+                <div class="row g-0">
+                    <!-- Contact Info Panel -->
+                    <div class="col-md-5">
+                        <div class="contact-info-panel">
+                            <h3 class="fw-bold mb-4"><i class="fa-solid fa-building me-2"></i>EstateSync</h3>
+                            <p class="mb-4 opacity-75">Reach out to us for any inquiries about our housing society management services.</p>
+
+                            <div class="info-item">
+                                <div class="info-icon"><i class="fa-solid fa-location-dot"></i></div>
+                                <div>
+                                    <h5>Address</h5>
+                                    <p>University Road, PUGC<br>Gujranwala, Pakistan</p>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon"><i class="fa-solid fa-phone"></i></div>
+                                <div>
+                                    <h5>Phone</h5>
+                                    <p>+92 315 8111907<br>+92 322 6018180</p>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div>
+                                    <h5>Email</h5>
+                                    <p>support@estatesync.com<br>info@estatesync.com</p>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon"><i class="fa-solid fa-clock"></i></div>
+                                <div>
+                                    <h5>Working Hours</h5>
+                                    <p>Mon - Sat: 9:00 AM - 6:00 PM<br>Sunday: Closed</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h6 class="fw-bold mb-3">Follow Us</h6>
+                                <div class="d-flex gap-3">
+                                    <a href="#" class="text-white fs-5"><i class="fa-brands fa-facebook"></i></a>
+                                    <a href="#" class="text-white fs-5"><i class="fa-brands fa-instagram"></i></a>
+                                    <a href="#" class="text-white fs-5"><i class="fa-brands fa-twitter"></i></a>
+                                    <a href="#" class="text-white fs-5"><i class="fa-brands fa-linkedin"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Panel -->
+                    <div class="col-md-7">
+                        <div class="form-panel">
+                            <h4 class="fw-bold mb-1">Send us a Message</h4>
+                            <p class="text-secondary mb-4">Fill out the form below and we'll get back to you within 24 hours.</p>
+
+                            <form action="/contact" method="POST">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="name" name="name" placeholder="Your Name" required>
+                                            <label for="name"><i class="fa-solid fa-user me-2 text-success"></i>Your Name</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+                                            <label for="email"><i class="fa-solid fa-envelope me-2 text-success"></i>Email Address</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="subject" name="subject" placeholder="Subject" required>
+                                            <label for="subject"><i class="fa-solid fa-tag me-2 text-success"></i>Subject</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <textarea class="form-control" id="message" name="message" placeholder="Message" style="height: 150px;" required></textarea>
+                                            <label for="message"><i class="fa-solid fa-message me-2 text-success"></i>Your Message</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-submit btn-success w-100 text-white">
+                                            <i class="fa-solid fa-paper-plane me-2"></i>Send Message
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Back to Home Button -->
+<div class="back-home">
+    <a href="/"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+</div>
+{% endblock %}

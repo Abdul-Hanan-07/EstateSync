@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard | EstateSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #1f2937, #111827);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .stats-row { margin-bottom: 30px; }
+    .stat-box {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border-left: 4px solid;
+    }
+    body[data-bs-theme="dark"] .stat-box { background: #1f2937; }
+    .stat-box:hover { transform: translateY(-3px); }
+    .stat-box.plots { border-left-color: #3b82f6; }
+    .stat-box.sold { border-left-color: #ef4444; }
+    .stat-box.members { border-left-color: #10b981; }
+    .stat-box.revenue { border-left-color: #f59e0b; }
+    .stat-box i { font-size: 2rem; margin-bottom: 10px; }
+    .stat-box.plots i { color: #3b82f6; }
+    .stat-box.sold i { color: #ef4444; }
+    .stat-box.members i { color: #10b981; }
+    .stat-box.revenue i { color: #f59e0b; }
+    .stat-number { font-size: 2rem; font-weight: 700; }
+    .stat-label { color: #6b7280; font-size: 0.9rem; }
+    .section-card { border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    .section-header { background: #15915a; color: white; padding: 15px 20px; font-weight: 600; }
+    .table-responsive { padding: 0; }
+    .btn-approve { background: #15915a; border: none; }
+    .btn-approve:hover { background: #0d7547; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="admin-header">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="fa-solid fa-shield-halved me-2"></i>Admin Control Center</h2>
+            <p class="mb-0 mt-2 opacity-75">Manage payments, users, and society operations.</p>
+        </div>
+        <a href="/audit" class="btn btn-light fw-bold px-4 py-2">
+            <i class="fa-solid fa-list-check me-2"></i>View Audit Logs
+        </a>
+    </div>
+
+    <div class="row stats-row g-3">
+        <div class="col-md-3 col-6">
+            <div class="stat-box plots">
+                <i class="fa-solid fa-map"></i>
+                <div class="stat-number">{{ stats.total_plots }}</div>
+                <div class="stat-label">Total Plots</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-box sold">
+                <i class="fa-solid fa-house-circle-check"></i>
+                <div class="stat-number">{{ stats.sold_plots }}</div>
+                <div class="stat-label">Sold Plots</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-box members">
+                <i class="fa-solid fa-users"></i>
+                <div class="stat-number">{{ stats.total_members }}</div>
+                <div class="stat-label">Members</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-box revenue">
+                <i class="fa-solid fa-sack-dollar"></i>
+                <div class="stat-number">Rs. {{ "{:,.0f}".format(stats.revenue) }}</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="section-header">
+                    <i class="fa-solid fa-clock me-2"></i>Pending Payment Approvals
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Payment ID</th>
+                                <th>Member Name</th>
+                                <th>CNIC</th>
+                                <th>Amount (Rs.)</th>
+                                <th>Mode</th>
+                                <th>Receipt</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pay in pending_payments %}
+                            <tr>
+                                <td class="fw-bold">#{{ pay.Payment_ID }}</td>
+                                <td>{{ pay.Full_Name }}</td>
+                                <td>{{ pay.CNIC }}</td>
+                                <td class="fw-bold text-success">Rs. {{ "{:,.0f}".format(pay.Amount_Paid) }}</td>
+                                <td>{{ pay.Payment_Mode|replace('_', ' ') }}</td>
+                                <td><code>{{ pay.Receipt_Number }}</code></td>
+                                <td><span class="badge bg-warning text-dark">Pending</span></td>
+                                <td>
+                                    <form action="/approve_payment/{{ pay.Payment_ID }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-approve text-white" title="Approve">
+                                            <i class="fa-solid fa-check"></i>
+                                        </button>
+                                    </form>
+                                    <form action="/reject_payment/{{ pay.Payment_ID }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to REJECT this payment?');">
+                                        <button type="submit" class="btn btn-sm btn-danger text-white ms-1" title="Reject">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-secondary">
+                                    <i class="fa-solid fa-check-circle me-2"></i>No pending payments. All caught up!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mt-4">
+            <div class="card section-card">
+                <div class="section-header" style="background: #8b5cf6;">
+                    <i class="fa-solid fa-envelope-open-text me-2"></i>Contact Messages
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Subject</th>
+                                <th>Message</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for msg in contact_messages %}
+                            <tr>
+                                <td class="fw-bold">#{{ msg.Message_ID }}</td>
+                                <td>{{ msg.Name }}</td>
+                                <td><a href="mailto:{{ msg.Email }}">{{ msg.Email }}</a></td>
+                                <td>{{ msg.Subject }}</td>
+                                <td style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ msg.Message }}</td>
+                                <td>{{ msg.Created_At }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-secondary">
+                                    <i class="fa-solid fa-inbox me-2"></i>No contact messages yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mt-4">
+            <div class="card section-card">
+                <div class="section-header" style="background: #3b82f6;">
+                    <i class="fa-solid fa-users-gear me-2"></i>Registered Users & Member Details
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>Account Email</th>
+                                <th>Contact & CNIC</th>
+                                <th>Address</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td class="fw-bold">#{{ user.User_ID }}</td>
+                                
+                                <td class="fw-bold text-dark">
+                                    {{ user.Full_Name if user.Full_Name else '<span class="text-muted fw-normal">System Admin</span>'|safe }}
+                                </td>
+                                
+                                <td><a href="mailto:{{ user.Email }}" class="text-decoration-none">{{ user.Email }}</a></td>
+                                
+                                <td>
+                                    {% if user.CNIC %}
+                                        <div class="small"><i class="fa-solid fa-id-card text-secondary me-1"></i> {{ user.CNIC }}</div>
+                                        <div class="small"><i class="fa-solid fa-phone text-secondary me-1"></i> {{ user.Phone_Number }}</div>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ user.Permanent_Address }}">
+                                    {{ user.Permanent_Address if user.Permanent_Address else '-' }}
+                                </td>
+                                
+                                <td>
+                                    <span class="badge {{ 'bg-danger' if user.Role == 'Admin' else 'bg-info' }}">
+                                        {{ user.Role }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

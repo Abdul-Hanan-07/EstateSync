@@ -1,0 +1,1123 @@
+{% extends 'base.html' %}
+
+{% block title %}EstateSync | Smart Housing Society Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── HERO ── */
+    .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, #052e1c 0%, #0b3d2e 40%, #1f8f5f 75%, #0f4c2a 100%);
+        /* padding handled by base.html body padding */
+    }
+    .hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 20% 50%, rgba(21,145,90,.25) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 20%, rgba(31,143,95,.15) 0%, transparent 50%);
+    }
+    .hero-bg-img {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 55%;
+        height: 100%;
+        object-fit: cover;
+        opacity: .18;
+        mask-image: linear-gradient(to left, rgba(0,0,0,.6), transparent);
+        -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,.6), transparent);
+    }
+    .hero-content { position: relative; z-index: 2; }
+    .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,.12);
+        color: #a7f3d0;
+        font-size: .8rem;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 50px;
+        margin-bottom: 22px;
+        border: 1px solid rgba(255,255,255,.15);
+    }
+    .hero h1 {
+        font-size: clamp(2.4rem, 5vw, 4rem);
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.15;
+        margin-bottom: 22px;
+    }
+    .hero h1 span { color: #6ee7b7; }
+    .hero-desc {
+        font-size: 1.1rem;
+        color: rgba(255,255,255,.82);
+        max-width: 580px;
+        line-height: 1.75;
+        margin-bottom: 36px;
+    }
+    .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-hero-primary {
+        background: #fff;
+        color: var(--navy) !important;
+        font-weight: 700;
+        padding: 14px 30px;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        transition: .3s;
+        box-shadow: 0 4px 20px rgba(0,0,0,.2);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    .btn-hero-primary:hover {
+        background: #f0fdf4;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(0,0,0,.25);
+    }
+    .btn-hero-secondary {
+        background: transparent;
+        color: #fff !important;
+        border: 2px solid rgba(255,255,255,.45);
+        font-weight: 600;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: .3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    .btn-hero-secondary:hover {
+        border-color: #fff;
+        background: rgba(255,255,255,.1);
+        transform: translateY(-3px);
+    }
+    .hero-stats { display: flex; gap: 32px; margin-top: 50px; flex-wrap: wrap; }
+    .hero-stat { text-align: center; }
+    .hero-stat-num {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #6ee7b7;
+        line-height: 1;
+    }
+    .hero-stat-label {
+        font-size: .75rem;
+        color: rgba(255,255,255,.65);
+        margin-top: 4px;
+        font-weight: 500;
+        letter-spacing: .5px;
+    }
+    .hero-badges {
+        display: flex;
+        gap: 12px;
+        margin-top: 28px;
+        flex-wrap: wrap;
+    }
+    .hero-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,.1);
+        color: #d1fae5;
+        font-size: .78rem;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,.12);
+    }
+
+    /* ── MARQUEE TRUST BAND ── */
+    .trust-band { background: var(--green); padding: 14px 0; overflow: hidden; }
+    .trust-track {
+        display: flex;
+        gap: 60px;
+        white-space: nowrap;
+        animation: marquee 25s linear infinite;
+    }
+    .trust-item {
+        color: #fff;
+        font-size: .85rem;
+        font-weight: 600;
+        letter-spacing: .5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .trust-item i { color: #a7f3d0; }
+    @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+    /* ── SECTION COMMON ── */
+    section { padding: 90px 0; }
+    .section-eyebrow {
+        display: inline-block;
+        color: var(--green);
+        font-size: .78rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+    .section-title {
+        font-size: clamp(1.7rem, 3vw, 2.4rem);
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 16px;
+        line-height: 1.2;
+    }
+    [data-bs-theme="dark"] .section-title { color: #f9fafb; }
+    .section-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.7;
+    }
+
+    /* ── FEATURES ── */
+    .features-section { background: var(--section-bg); }
+    .feature-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 36px 28px;
+        height: 100%;
+        transition: .35s;
+        position: relative;
+        overflow: hidden;
+    }
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 0;
+        background: linear-gradient(180deg, var(--green), var(--green-light));
+        border-radius: 0 0 4px 0;
+        transition: .4s;
+    }
+    .feature-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(21,145,90,.12);
+        border-color: var(--green);
+    }
+    .feature-card:hover::before { height: 100%; }
+    .feature-icon-wrap {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        color: var(--green);
+        margin-bottom: 22px;
+        transition: .3s;
+    }
+    .feature-card:hover .feature-icon-wrap {
+        background: linear-gradient(135deg, var(--green), var(--green-light));
+        color: #fff;
+    }
+    .feature-card h5 {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: var(--text);
+    }
+    [data-bs-theme="dark"] .feature-card h5 { color: #f9fafb; }
+    .feature-card p {
+        color: var(--text-muted);
+        font-size: .9rem;
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    /* ── ABOUT / VISUAL SPLIT ── */
+    .about-section { background: #fff; }
+    [data-bs-theme="dark"] .about-section { background: #1a2332; }
+    .about-img-wrap {
+        position: relative;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,.15);
+        background: linear-gradient(135deg, #0b3d2e, #1f8f5f);
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .about-img-wrap img {
+        width: 100%;
+        height: 480px;
+        object-fit: cover;
+        display: block;
+    }
+    .about-img-wrap .img-fallback {
+        width: 100%;
+        height: 480px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: rgba(255,255,255,.7);
+        font-size: 4rem;
+    }
+    .about-img-wrap .img-fallback i {
+        font-size: 5rem;
+        margin-bottom: 15px;
+        color: rgba(255,255,255,.5);
+    }
+    .about-img-wrap .img-fallback span { font-size: 1rem; font-weight: 500; }
+    .about-badge {
+        position: absolute;
+        bottom: 24px;
+        left: 24px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 14px 18px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .about-badge-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--green), var(--green-light));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.3rem;
+    }
+    .about-badge-text strong {
+        display: block;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--navy);
+    }
+    .about-badge-text span { font-size: .78rem; color: var(--text-muted); }
+    .about-point {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    .about-point-icon {
+        width: 42px;
+        height: 42px;
+        background: #d1fae5;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green);
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    .about-point h6 {
+        font-weight: 700;
+        font-size: .95rem;
+        color: var(--text);
+        margin-bottom: 4px;
+    }
+    [data-bs-theme="dark"] .about-point h6 { color: #f9fafb; }
+    .about-point p {
+        font-size: .85rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.55;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how-section { background: var(--section-bg); }
+    .step-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 34px 26px;
+        text-align: center;
+        height: 100%;
+        position: relative;
+        transition: .3s;
+    }
+    .step-card:hover {
+        box-shadow: 0 12px 35px rgba(21,145,90,.1);
+        transform: translateY(-4px);
+    }
+    .step-number {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, var(--green), var(--green-light));
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.2rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+    }
+    .step-card h5 {
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 10px;
+    }
+    [data-bs-theme="dark"] .step-card h5 { color: #f9fafb; }
+    .step-card p {
+        color: var(--text-muted);
+        font-size: .88rem;
+        line-height: 1.65;
+        margin: 0;
+    }
+    .step-connector { display: none; }
+    @media(min-width:992px) {
+        .step-connector {
+            display: block;
+            position: absolute;
+            top: 26px;
+            right: -20px;
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(to right, var(--green), transparent);
+            z-index: 1;
+        }
+    }
+
+    /* ── MAP PREVIEW ── */
+    .map-preview-section { background: #fff; }
+    [data-bs-theme="dark"] .map-preview-section { background: #1a2332; }
+    .plot-legend {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 28px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: .85rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+    [data-bs-theme="dark"] .legend-item { color: #d1d5db; }
+    .legend-dot { width: 16px; height: 16px; border-radius: 4px; }
+    .dot-available { background: #22c55e; }
+    .dot-sold { background: #ef4444; }
+    .dot-construction { background: #f59e0b; }
+    .map-grid-preview {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+        padding: 24px;
+        background: var(--section-bg);
+        border-radius: 16px;
+        border: 1px solid var(--border);
+    }
+    .mini-plot {
+        height: 42px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .65rem;
+        font-weight: 700;
+        color: #fff;
+        cursor: pointer;
+        transition: .2s;
+    }
+    .mini-plot:hover { transform: scale(1.08); }
+    .plot-avail { background: linear-gradient(135deg, #16a34a, #22c55e); }
+    .plot-sold { background: linear-gradient(135deg, #b91c1c, #ef4444); }
+    .plot-uc { background: linear-gradient(135deg, #d97706, #f59e0b); }
+
+    /* ── STATS BAND ── */
+    .stats-band {
+        background: linear-gradient(135deg, #0b3d2e, #1f8f5f);
+        padding: 70px 0;
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+    .stat-num span { color: #6ee7b7; }
+    .stat-label {
+        font-size: .9rem;
+        color: rgba(255,255,255,.7);
+        margin-top: 8px;
+        font-weight: 500;
+    }
+    .stat-divider {
+        width: 1px;
+        background: rgba(255,255,255,.15);
+        height: 80px;
+        margin: auto;
+    }
+
+    /* ── GALLERY ── */
+    .gallery-section { background: var(--section-bg); }
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        grid-template-rows: 220px 220px;
+        gap: 12px;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    .gallery-item {
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+        min-height: 200px;
+    }
+    .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: .5s;
+        display: block;
+    }
+    .gallery-item .img-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #6b7280;
+        font-size: 2rem;
+    }
+    .gallery-item .img-fallback i {
+        font-size: 3rem;
+        margin-bottom: 8px;
+        color: #9ca3af;
+    }
+    .gallery-item .img-fallback span { font-size: .8rem; font-weight: 500; }
+    .g1 { grid-column: span 6; grid-row: span 2; }
+    .g2 { grid-column: span 3; }
+    .g3 { grid-column: span 3; }
+    .g4 { grid-column: span 3; }
+    .g5 { grid-column: span 3; }
+    .gallery-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,.4), transparent);
+        opacity: 0;
+        transition: .3s;
+        display: flex;
+        align-items: flex-end;
+        padding: 16px;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    .gallery-overlay span { color: #fff; font-size: .8rem; font-weight: 600; }
+
+    /* ── TESTIMONIALS ── */
+    .testimonial-section { background: #fff; }
+    [data-bs-theme="dark"] .testimonial-section { background: #1a2332; }
+    .testimonial-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 32px;
+        height: 100%;
+        transition: .3s;
+    }
+    .testimonial-card:hover {
+        box-shadow: 0 12px 35px rgba(21,145,90,.1);
+        transform: translateY(-4px);
+    }
+    .stars { color: #f59e0b; font-size: .95rem; margin-bottom: 14px; }
+    .testimonial-text {
+        color: var(--text);
+        font-size: .93rem;
+        line-height: 1.7;
+        margin-bottom: 22px;
+        font-style: italic;
+    }
+    [data-bs-theme="dark"] .testimonial-text { color: #d1d5db; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .author-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #d1fae5;
+    }
+    .author-name {
+        font-weight: 700;
+        font-size: .9rem;
+        color: var(--text);
+    }
+    [data-bs-theme="dark"] .author-name { color: #f9fafb; }
+    .author-role { font-size: .78rem; color: var(--text-muted); }
+
+    /* ── CTA BAND ── */
+    .cta-section {
+        background: linear-gradient(135deg, #052e1c 0%, #0b3d2e 50%, #1f8f5f 100%);
+        padding: 90px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 70% 50%, rgba(110,231,183,.12), transparent 60%);
+    }
+    .cta-section h2 {
+        color: #fff;
+        font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+        font-weight: 800;
+        margin-bottom: 16px;
+    }
+    .cta-section p {
+        color: rgba(255,255,255,.75);
+        font-size: 1.05rem;
+        margin-bottom: 36px;
+    }
+    .btn-cta-white {
+        background: #fff;
+        color: var(--navy) !important;
+        font-weight: 700;
+        padding: 14px 34px;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        transition: .3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    .btn-cta-white:hover {
+        background: #f0fdf4;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    }
+    .btn-cta-outline {
+        background: transparent;
+        color: #fff !important;
+        border: 2px solid rgba(255,255,255,.4);
+        font-weight: 600;
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: .3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    .btn-cta-outline:hover {
+        border-color: #fff;
+        background: rgba(255,255,255,.1);
+    }
+
+    /* ── GLOBAL BUTTONS ── */
+    .btn-theme {
+        background: var(--green);
+        color: #fff !important;
+        border-radius: 12px;
+        padding: 12px 28px;
+        font-weight: 600;
+        transition: .3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        border: none;
+    }
+    .btn-theme:hover {
+        background: var(--green-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(21,145,90,.2);
+    }
+
+    /* ── RESPONSIVE FIXES ── */
+    @media(max-width:991px) { .hero-bg-img { display: none; } .stat-divider { display: none; } }
+    @media(max-width:768px) {
+        .gallery-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; }
+        .g1 { grid-column: span 2; grid-row: span 1; }
+        .g2, .g3, .g4, .g5 { grid-column: span 1; }
+        section { padding: 60px 0; }
+        .about-img-wrap, .about-img-wrap img, .about-img-wrap .img-fallback { height: 300px; }
+    }
+    @media(max-width:576px) {
+        .hero-stats { gap: 20px; }
+        .hero-stat-num { font-size: 1.6rem; }
+        .map-grid-preview { grid-template-columns: repeat(4, 1fr); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1400&q=80" class="hero-bg-img" alt="Modern housing" onerror="this.style.display='none'">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7 hero-content">
+                <div class="hero-eyebrow">
+                    <i class="fa-solid fa-star"></i> Pakistan's #1 Smart Society Platform
+                </div>
+                <h1>Manage Your Housing Society <span>Smarter</span> Than Ever</h1>
+                <p class="hero-desc">EstateSync brings real-time plot tracking, digital payments, and complete administrative control into one powerful platform — built for modern societies.</p>
+                <div class="hero-cta">
+                    <a href="/map" class="btn-hero-primary btn">
+                        <i class="fa-solid fa-map-location-dot me-2"></i> View Live Map
+                    </a>
+                    {% if not session.get('loggedin') %}
+                    <a href="/signup" class="btn-hero-secondary btn">
+                        <i class="fa-solid fa-user-plus me-2"></i> Get Started Free
+                    </a>
+                    {% elif session.get('role') == 'Resident' %}
+                    <a href="/resident" class="btn-hero-secondary btn">
+                        <i class="fa-solid fa-gauge me-2"></i> My Dashboard
+                    </a>
+                    {% elif session.get('role') == 'Admin' %}
+                    <a href="/admin" class="btn-hero-secondary btn">
+                        <i class="fa-solid fa-shield-halved me-2"></i> Admin Panel
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hero-badges">
+                    <span class="hero-badge"><i class="fa-solid fa-shield-halved"></i> 100% Secure</span>
+                    <span class="hero-badge"><i class="fa-solid fa-bolt"></i> Real-Time Updates</span>
+                    <span class="hero-badge"><i class="fa-solid fa-mobile-screen"></i> Mobile Ready</span>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat"><div class="hero-stat-num">500+</div><div class="hero-stat-label">Plots Managed</div></div>
+                    <div class="hero-stat"><div class="hero-stat-num">12+</div><div class="hero-stat-label">Society Blocks</div></div>
+                    <div class="hero-stat"><div class="hero-stat-num">99%</div><div class="hero-stat-label">Uptime</div></div>
+                    <div class="hero-stat"><div class="hero-stat-num">24/7</div><div class="hero-stat-label">Support</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="trust-band">
+    <div class="trust-track" id="trustTrack">
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> RBAC Security</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Live Plot Tracking</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Instant Payment Approvals</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Installment Management</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Maintenance Billing</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Audit Logs</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Staff Management</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Digital Records</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> RBAC Security</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Live Plot Tracking</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Instant Payment Approvals</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Installment Management</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Maintenance Billing</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Audit Logs</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Staff Management</span>
+        <span class="trust-item"><i class="fa-solid fa-check-circle"></i> Digital Records</span>
+    </div>
+</div>
+
+<section class="features-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="section-eyebrow">What We Offer</span>
+            <h2 class="section-title">Everything Your Society Needs</h2>
+            <p class="section-subtitle">A complete suite of tools designed specifically for housing society administration in Pakistan.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fa-solid fa-map-location-dot"></i></div>
+                    <h5>Interactive Society Map</h5>
+                    <p>Real-time color-coded plot visualization. Green for available, red for sold, yellow for under construction. Updated live from the database.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fa-solid fa-credit-card"></i></div>
+                    <h5>Installment Tracking</h5>
+                    <p>Submit and track all payment installments digitally. Admins approve or flag transactions. Full payment history always accessible.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h5>Role-Based Access</h5>
+                    <p>Separate dashboards for Admins and Residents. Every user sees only what they're authorized for — no data leaks, no confusion.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fa-solid fa-wrench"></i></div>
+                    <h5>Maintenance Billing</h5>
+                    <p>Auto-generate monthly maintenance bills per plot and track paid vs unpaid status across all service categories.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fa-solid fa-users"></i></div>
+                    <h5>Member Management</h5>
+                    <p>Complete resident registry with CNIC, contact info, booking history and plot assignments — all in one searchable database.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon-wrap"><i class="fa-solid fa-scroll"></i></div>
+                    <h5>Audit Logs</h5>
+                    <p>Every admin action is logged with timestamp, old value, and new value. Full accountability trail for INSERT, UPDATE, and DELETE events.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="about-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="about-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=900&q=80" alt="Modern housing society" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="img-fallback" style="display:none;">
+                        <i class="fa-solid fa-city"></i>
+                        <span>Modern Housing Society</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <span class="section-eyebrow">About EstateSync</span>
+                <h2 class="section-title">Built for Pakistani Housing Societies</h2>
+                <p style="color:var(--text-muted);font-size:.95rem;line-height:1.75;margin-bottom:30px;">
+                    EstateSync was designed to solve the real administrative challenges faced by housing societies — from tracking hundreds of plots to managing installment payments and maintenance bills. It replaces paper-based chaos with a clean, secure digital system.
+                </p>
+                <div class="about-point">
+                    <div class="about-point-icon"><i class="fa-solid fa-database"></i></div>
+                    <div>
+                        <h6>11-Table Relational Database</h6>
+                        <p>Purpose-built MySQL schema covering Blocks, Plots, Members, Bookings, Payments, Staff, Services and more with full referential integrity.</p>
+                    </div>
+                </div>
+                <div class="about-point">
+                    <div class="about-point-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <div>
+                        <h6>Three-Tier Architecture</h6>
+                        <p>Clean separation of presentation (HTML/Bootstrap), application logic (Flask/Python), and data (MySQL) layers following academic best practices.</p>
+                    </div>
+                </div>
+                <div class="about-point">
+                    <div class="about-point-icon"><i class="fa-solid fa-lock"></i></div>
+                    <div>
+                        <h6>Secure Session Management</h6>
+                        <p>Flask sessions with RBAC ensure Admins and Residents are always routed to the right place with the right permissions.</p>
+                    </div>
+                </div>
+                <a href="/contact" class="btn-theme mt-3">
+                    <i class="fa-solid fa-envelope me-2"></i> Contact Our Team
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="how-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="section-eyebrow">Simple Process</span>
+            <h2 class="section-title">How EstateSync Works</h2>
+            <p class="section-subtitle">Get your society digitized in four straightforward steps.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3 position-relative">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h5>Create Account</h5>
+                    <p>Register as a Resident or Admin. Your role determines which features and data you can access inside the portal.</p>
+                </div>
+                <div class="step-connector"></div>
+            </div>
+            <div class="col-md-6 col-lg-3 position-relative">
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h5>Browse the Map</h5>
+                    <p>Explore the interactive society map. See available plots in real-time, color-coded by current status directly from the database.</p>
+                </div>
+                <div class="step-connector"></div>
+            </div>
+            <div class="col-md-6 col-lg-3 position-relative">
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h5>Book & Pay</h5>
+                    <p>Select a plot, choose an installment plan, and submit payments digitally. All transactions are stored with receipt numbers.</p>
+                </div>
+                <div class="step-connector"></div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="step-card">
+                    <div class="step-number">4</div>
+                    <h5>Admin Approves</h5>
+                    <p>Admin reviews pending payments on the dashboard and approves them with a single click. Status updates instantly across the platform.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="map-preview-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <span class="section-eyebrow">Live Society Map</span>
+                <h2 class="section-title">See Every Plot at a Glance</h2>
+                <p style="color:var(--text-muted);font-size:.93rem;line-height:1.75;margin-bottom:24px;">
+                    The interactive map pulls live data straight from the database. Every plot is color-coded by its current status so you never have to guess what's available.
+                </p>
+                <div class="plot-legend">
+                    <div class="legend-item"><div class="legend-dot dot-available"></div> Available</div>
+                    <div class="legend-item"><div class="legend-dot dot-sold"></div> Sold / Booked</div>
+                    <div class="legend-item"><div class="legend-dot dot-construction"></div> Under Construction</div>
+                </div>
+                <a href="/map" class="btn-theme mt-2">
+                    <i class="fa-solid fa-map-location-dot me-2"></i> Open Full Map
+                </a>
+            </div>
+            <div class="col-lg-7">
+                <div class="map-grid-preview">
+                    <div class="mini-plot plot-avail">A-01</div>
+                    <div class="mini-plot plot-sold">A-02</div>
+                    <div class="mini-plot plot-avail">A-03</div>
+                    <div class="mini-plot plot-uc">A-04</div>
+                    <div class="mini-plot plot-sold">A-05</div>
+                    <div class="mini-plot plot-avail">A-06</div>
+                    <div class="mini-plot plot-avail">A-07</div>
+                    <div class="mini-plot plot-sold">A-08</div>
+                    <div class="mini-plot plot-uc">A-09</div>
+                    <div class="mini-plot plot-avail">A-10</div>
+                    <div class="mini-plot plot-sold">A-11</div>
+                    <div class="mini-plot plot-avail">A-12</div>
+                    <div class="mini-plot plot-uc">A-13</div>
+                    <div class="mini-plot plot-sold">A-14</div>
+                    <div class="mini-plot plot-avail">A-15</div>
+                    <div class="mini-plot plot-uc">A-16</div>
+                    <div class="mini-plot plot-avail">B-01</div>
+                    <div class="mini-plot plot-avail">B-02</div>
+                    <div class="mini-plot plot-uc">B-03</div>
+                    <div class="mini-plot plot-sold">B-04</div>
+                    <div class="mini-plot plot-avail">B-05</div>
+                    <div class="mini-plot plot-avail">B-06</div>
+                    <div class="mini-plot plot-sold">B-07</div>
+                    <div class="mini-plot plot-avail">B-08</div>
+                    <div class="mini-plot plot-sold">B-09</div>
+                    <div class="mini-plot plot-uc">B-10</div>
+                    <div class="mini-plot plot-avail">B-11</div>
+                    <div class="mini-plot plot-avail">B-12</div>
+                    <div class="mini-plot plot-sold">B-13</div>
+                    <div class="mini-plot plot-uc">B-14</div>
+                    <div class="mini-plot plot-avail">B-15</div>
+                    <div class="mini-plot plot-sold">B-16</div>
+                </div>
+                <p style="text-align:center;font-size:.78rem;color:var(--text-muted);margin-top:10px;">
+                    <i class="fa-solid fa-circle-info me-1"></i> Preview only — full map pulls live data from the database
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="stats-band">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-6 col-lg-3 mb-4 mb-lg-0">
+                <div class="stat-item">
+                    <div class="stat-num">500<span>+</span></div>
+                    <div class="stat-label">Plots Managed</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 mb-4 mb-lg-0">
+                <div class="stat-item">
+                    <div class="stat-num">11</div>
+                    <div class="stat-label">Database Tables</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-item">
+                    <div class="stat-num">3</div>
+                    <div class="stat-label">Tier Architecture</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-item">
+                    <div class="stat-num">24<span>/7</span></div>
+                    <div class="stat-label">System Availability</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="gallery-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="section-eyebrow">Society Glimpse</span>
+            <h2 class="section-title">Modern Living, Smartly Managed</h2>
+        </div>
+        <div class="gallery-grid">
+            <div class="gallery-item g1">
+                <img src="{{ url_for('static', filename='pic1.jpg') }}" alt="Society Overview" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="img-fallback" style="display:none;">
+                    <i class="fa-solid fa-city"></i>
+                    <span>Society Overview</span>
+                </div>
+                <div class="gallery-overlay"><span>Society Overview</span></div>
+            </div>
+            <div class="gallery-item g2">
+                <img src="https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&q=80" alt="Modern house" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="img-fallback" style="display:none;">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Residential Plots</span>
+                </div>
+                <div class="gallery-overlay"><span>Residential Plots</span></div>
+            </div>
+            <div class="gallery-item g3">
+                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" alt="Architecture" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="img-fallback" style="display:none;">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Premium Designs</span>
+                </div>
+                <div class="gallery-overlay"><span>Premium Designs</span></div>
+            </div>
+            <div class="gallery-item g4">
+                <img src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80" alt="Construction" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="img-fallback" style="display:none;">
+                    <i class="fa-solid fa-hammer"></i>
+                    <span>Under Construction</span>
+                </div>
+                <div class="gallery-overlay"><span>Under Construction</span></div>
+            </div>
+            <div class="gallery-item g5">
+                <img src="https://images.unsplash.com/photo-1448630360428-65456885c650?w=600&q=80" alt="Aerial view" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="img-fallback" style="display:none;">
+                    <i class="fa-solid fa-plane"></i>
+                    <span>Aerial View</span>
+                </div>
+                <div class="gallery-overlay"><span>Aerial View</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="testimonial-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="section-eyebrow">What Residents Say</span>
+            <h2 class="section-title">Trusted by Society Members</h2>
+            <p class="section-subtitle">Here's what people managing and living in EstateSync-powered societies have to say.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"Finally a system that shows me exactly which plots are available in real time. No more calling the office and waiting. The map is incredibly easy to use."</p>
+                    <div class="testimonial-author">
+                        <img src="https://ui-avatars.com/api/?name=Ahmed+Khan&background=15915a&color=fff&size=80" class="author-avatar" alt="Ahmed Khan">
+                        <div>
+                            <div class="author-name">Ahmed Khan</div>
+                            <div class="author-role">Plot Owner · Block A</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"As the society admin, the payment approval workflow has saved me hours every week. Everything is tracked, logged, and instantly visible. Highly professional system."</p>
+                    <div class="testimonial-author">
+                        <img src="https://ui-avatars.com/api/?name=Sara+Malik&background=0b3d2e&color=fff&size=80" class="author-avatar" alt="Sara Malik">
+                        <div>
+                            <div class="author-name">Sara Malik</div>
+                            <div class="author-role">Society Administrator</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars">★★★★★</div>
+                    <p class="testimonial-text">"The installment tracking feature is a game changer. I can see my full payment history and remaining balance without calling anyone. Digital receipts are so convenient."</p>
+                    <div class="testimonial-author">
+                        <img src="https://ui-avatars.com/api/?name=Usman+Ali&background=1f8f5f&color=fff&size=80" class="author-avatar" alt="Usman Ali">
+                        <div>
+                            <div class="author-name">Usman Ali</div>
+                            <div class="author-role">Resident · Block B</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <div class="container text-center position-relative" style="z-index:2;">
+        <span class="section-eyebrow" style="color:#6ee7b7;">Get Started Today</span>
+        <h2>Ready to Modernize Your Society?</h2>
+        <p>Join EstateSync and replace paperwork with a smart, secure digital platform.</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap mt-4">
+            {% if not session.get('loggedin') %}
+            <a href="/signup" class="btn-cta-white btn">
+                <i class="fa-solid fa-user-plus me-2"></i> Create Free Account
+            </a>
+            <a href="/contact" class="btn-cta-outline btn">
+                <i class="fa-solid fa-envelope me-2"></i> Get In Touch
+            </a>
+            {% else %}
+            <a href="/" class="btn-cta-white btn">
+                <i class="fa-solid fa-gauge me-2"></i> Go to Dashboard
+            </a>
+            <a href="/contact" class="btn-cta-outline btn">
+                <i class="fa-solid fa-envelope me-2"></i> Contact Support
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ── COUNT-UP ANIMATION ──
+    const counters = document.querySelectorAll(".stat-num");
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                const text = el.textContent;
+                const num = parseInt(text.replace(/\D/g,''));
+                if (!num) return;
+                let current = 0;
+                const step = Math.ceil(num / 60);
+                const timer = setInterval(() => {
+                    current = Math.min(current + step, num);
+                    el.innerHTML = current + (text.includes('+') ? '<span>+</span>' : text.includes('/7') ? '<span>/7</span>' : '');
+                    if (current >= num) clearInterval(timer);
+                }, 25);
+                observer.unobserve(el);
+            }
+        });
+    }, { threshold: 0.5 });
+    counters.forEach(c => observer.observe(c));
+</script>
+{% endblock %}

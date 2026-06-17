@@ -1,0 +1,246 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}EstateSync - Sign Up{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Using the exact same styling variables to keep the UI perfectly identical */
+    .auth-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 15px;
+        min-height: 85vh;
+    }
+
+    .main-card {
+        width: 1000px;
+        min-height: 600px;
+        display: flex;
+        border-radius: 25px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.35);
+    }
+
+    .brand-section {
+        width: 45%;
+        background: linear-gradient(160deg, #075e35, #1fa463);
+        color: white !important;
+        padding: 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .brand-section h1, .brand-section h3, .brand-section p { color: white !important; }
+
+    .brand-logo {
+        width: 80px;
+        height: 80px;
+        background: white;
+        color: #15915a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+    }
+
+    .login-section {
+        width: 55%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        padding: 20px 0; /* Added slight padding for longer forms */
+    }
+
+    .login-card { width: 75%; }
+    .login-card h2 { font-size: 30px; margin-bottom: 10px; color: #222;}
+    .login-card > p { color: #777; margin-bottom: 20px; }
+
+    .login-card label {
+        display: block;
+        margin-top: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .input-box {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 0 15px;
+        margin-top: 6px;
+        height: 45px;
+        background: #fff;
+    }
+
+    .input-box i { color: #15915a; margin-right: 10px; width: 16px; text-align: center;}
+    .input-box input { border: none; outline: none; width: 100%; background: transparent; }
+
+    .login-card select {
+        width: 100%;
+        height: 45px;
+        padding: 0 15px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        margin-top: 6px;
+        background: #fff;
+        outline: none;
+    }
+
+    .login-btn {
+        width: 100%;
+        height: 48px;
+        margin-top: 25px;
+        border: none;
+        border-radius: 10px;
+        background: #15915a;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .login-btn:hover { background: #0d7547; }
+
+    .signup { text-align: center; margin-top: 15px; color: #777;}
+    .signup a { color: #15915a; text-decoration: none; font-weight: 600;}
+
+    .stats { display: flex; gap: 25px; margin-top: 45px; }
+    .stats h2 { font-size: 25px; margin-bottom: 0; color: white;}
+    .stats p { margin: 0; color: white; opacity: 0.9;}
+
+    /* Smooth transition for the dynamic fields */
+    #residentFields {
+        transition: all 0.3s ease;
+    }
+
+    @media(max-width:850px) {
+        .main-card { flex-direction: column; width: 100%; }
+        .brand-section, .login-section { width: 100%; }
+        .brand-section { padding: 40px 20px; text-align: center; align-items: center; }
+        .login-card { margin: 40px 0; width: 90%; }
+        .stats { justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="main-card">
+      <div class="brand-section">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <img src="{{ url_for('static', filename='favicon.svg') }}" alt="EstateSync Logo" style="height: 65px; width: auto; border-radius: 15px;">
+            <h1 class="mb-0 fw-bold" style="color: white; font-size: 2.5rem; letter-spacing: -1px;">EstateSync</h1>
+        </div>
+        
+        <h3>Smart Housing Society Management</h3>
+            <p>Manage plots, residents, payments, and society operations easily.</p>
+
+            <div class="stats">
+                <div><h2>500+</h2><p>Plots</p></div>
+                <div><h2>24/7</h2><p>Support</p></div>
+                <div><h2>100%</h2><p>Secure</p></div>
+            </div>
+        </div>
+
+        <div class="login-section">
+            <div class="login-card">
+
+                <h2>Create Account</h2>
+                <p>Sign up to continue</p>
+
+                <form action="/signup" method="POST">
+
+                    <label>Role</label>
+                    <select name="role" id="roleSelect" onchange="toggleResidentFields()">
+                        <option value="Resident" selected>Resident</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+
+                    <label>Full Name</label>
+                    <div class="input-box">
+                        <i class="fa fa-user"></i>
+                        <input type="text" name="name" required placeholder="Enter full name">
+                    </div>
+
+                    <label>Email</label>
+                    <div class="input-box">
+                        <i class="fa fa-envelope"></i>
+                        <input type="email" name="email" required placeholder="name@example.com">
+                    </div>
+
+                    <label>Password</label>
+                    <div class="input-box">
+                        <i class="fa fa-lock"></i>
+                        <input type="password" name="password" required placeholder="Create a password">
+                    </div>
+
+                    <div id="residentFields">
+                        <label>CNIC</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-id-card"></i>
+                            <input type="text" name="cnic" id="cnicInput" placeholder="e.g. 34101-1234567-1" required>
+                        </div>
+
+                        <label>Phone Number</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-phone"></i>
+                            <input type="text" name="phone" id="phoneInput" placeholder="e.g. 0300-1234567" required>
+                        </div>
+
+                        <label>Permanent Address</label>
+                        <div class="input-box">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <input type="text" name="address" id="addressInput" placeholder="Enter your full address" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="login-btn">Create Account</button>
+
+                </form>
+
+                <p class="signup">
+                    Already have an account? <a href="/login">Login</a>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JavaScript to handle hiding/showing the extra profile fields
+    function toggleResidentFields() {
+        const role = document.getElementById('roleSelect').value;
+        const resFields = document.getElementById('residentFields');
+        const cnic = document.getElementById('cnicInput');
+        const phone = document.getElementById('phoneInput');
+        const addr = document.getElementById('addressInput');
+
+        if (role === 'Admin') {
+            // Hide and remove required tags for Admin
+            resFields.style.display = 'none';
+            cnic.required = false;
+            phone.required = false;
+            addr.required = false;
+        } else {
+            // Show and make required for Resident
+            resFields.style.display = 'block';
+            cnic.required = true;
+            phone.required = true;
+            addr.required = true;
+        }
+    }
+    
+    // Run once on page load just to ensure initial state matches the dropdown
+    document.addEventListener("DOMContentLoaded", toggleResidentFields);
+</script>
+{% endblock %}

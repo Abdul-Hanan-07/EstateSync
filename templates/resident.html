@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Resident Dashboard | EstateSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #15915a, #0d7547);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        border: none;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .stat-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; }
+    .stat-label { font-size: 0.9rem; opacity: 0.8; }
+    .booking-card { border-radius: 15px; border: none; overflow: hidden; }
+    .booking-header { background: #15915a; color: white; padding: 20px; }
+    .payment-row { padding: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .payment-row:last-child { border-bottom: none; }
+    .badge-pending { background: #f59e0b; color: white; }
+    .badge-approved { background: #10b981; color: white; }
+    .badge-rejected { background: #ef4444; color: white; } /* Added so rejected payments turn red! */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="fw-bold mb-2"><i class="fa-solid fa-user-circle me-2"></i>Welcome, {{ member.Full_Name if member else 'Resident' }}</h2>
+                <p class="mb-0 opacity-75">Manage your plots, payments, and installment plans.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                    <i class="fa-solid fa-envelope me-1"></i>{{ session.email }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {% if not member %}
+    <div class="alert alert-warning">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        Your profile is incomplete. Please contact admin to update your member details.
+    </div>
+    {% else %}
+    
+    {% if bookings %}
+        {% for booking in bookings %}
+        <div class="card booking-card mb-4 shadow-sm">
+            <div class="booking-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0"><i class="fa-solid fa-house me-2"></i>Plot {{ booking.Plot_Number }} - Block {{ booking.Block_Name }}</h4>
+                    </div>
+                    <div class="col-md-6 text-md-end mt-2 mt-md-0">
+                        <span class="badge bg-light text-dark">Booking Date: {{ booking.Booking_Date }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3 col-6 text-center">
+                        <div class="stat-card bg-success bg-opacity-10">
+                            <div class="stat-icon text-success"><i class="fa-solid fa-ruler-combined"></i></div>
+                            <div class="stat-value text-success">{{ booking.Size_Marla }}</div>
+                            <div class="stat-label">Marla</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 text-center">
+                        <div class="stat-card bg-primary bg-opacity-10">
+                            <div class="stat-icon text-primary"><i class="fa-solid fa-tag"></i></div>
+                            <div class="stat-value text-primary">{{ booking.Category }}</div>
+                            <div class="stat-label">Category</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 text-center">
+                        <div class="stat-card bg-warning bg-opacity-10">
+                            <div class="stat-icon text-warning"><i class="fa-solid fa-money-bill-wave"></i></div>
+                            <div class="stat-value text-warning">Rs. {{ "{:,.0f}".format(booking.Total_Price) }}</div>
+                            <div class="stat-label">Total Price</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 text-center">
+                        <div class="stat-card bg-info bg-opacity-10">
+                            <div class="stat-icon text-info"><i class="fa-solid fa-calendar-alt"></i></div>
+                            <div class="stat-value text-info">{{ booking.Duration_Months }}</div>
+                            <div class="stat-label">Months Plan</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-file-invoice-dollar me-2 text-success"></i>Payment History</h5>
+                        {% if payments %}
+                        <div class="card border-0 shadow-sm">
+                            {% for payment in payments %}
+                                {% if payment.Booking_ID == booking.Booking_ID %}
+                                <div class="payment-row d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">Receipt: {{ payment.Receipt_Number }}</div>
+                                        <small class="text-secondary">{{ payment.Payment_Date }} | {{ payment.Payment_Mode|replace('_', ' ') }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold text-success">Rs. {{ "{:,.0f}".format(payment.Amount_Paid) }}</div>
+                                        <span class="badge {{ 'badge-approved' if payment.Status == 'Approved' else 'badge-rejected' if payment.Status == 'Rejected' else 'badge-pending' }}">
+                                            {{ payment.Status }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">No payments recorded yet.</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-plus-circle me-2 text-success"></i>Submit New Payment</h5>
+                        <div class="card border-0 shadow-sm p-3">
+                            <form action="/submit_payment" method="POST">
+                                <input type="hidden" name="booking_id" value="{{ booking.Booking_ID }}">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Amount (Rs.)</label>
+                                    <input type="number" name="amount" class="form-control" required min="1" placeholder="Enter amount">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Receipt Number</label>
+                                    <input type="text" name="receipt_num" class="form-control" required placeholder="e.g., REC-001">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Payment Mode</label>
+                                    <select name="payment_mode" class="form-select" required>
+                                        <option value="BANK_CHALLAN">Bank Challan</option>
+                                        <option value="ONLINE_TRANSFER">Online Transfer</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100" style="background: #15915a; border: none;">
+                                    <i class="fa-solid fa-paper-plane me-2"></i>Submit Payment Request
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center py-5">
+            <i class="fa-solid fa-house-circle-xmark fa-3x mb-3 text-secondary"></i>
+            <h4>No Active Bookings</h4>
+            <p>You don't have any plot bookings yet. Contact admin to book a plot.</p>
+            <a href="/map" class="btn btn-success" style="background: #15915a; border: none;">
+                <i class="fa-solid fa-map me-2"></i>View Available Plots
+            </a>
+        </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

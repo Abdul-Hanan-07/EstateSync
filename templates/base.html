@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EstateSync{% endblock %}</title>    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color .4s, color .4s;
+            overflow-x: hidden;
+            padding-top: 70px; /* Push all content below fixed navbar */
+        }
+
+        /* ── CSS VARIABLES ── */
+        :root {
+            --green: #15915a; --green-dark: #0d7547; --green-light: #1fa463;
+            --navy: #0b3d2e; --dark: #111827; --card-bg: #fff;
+            --text: #374151; --text-muted: #6b7280; --border: #e5e7eb;
+            --section-bg: #f8fafc;
+            --navbar-height: 70px;
+        }
+        [data-bs-theme="dark"] {
+            --card-bg: #1f2937; --text: #f9fafb; --text-muted: #9ca3af;
+            --border: #374151; --section-bg: #111827;
+        }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            backdrop-filter: blur(16px);
+            background: rgba(255,255,255,.92) !important;
+            box-shadow: 0 2px 20px rgba(0,0,0,.07);
+            padding: 14px 0;
+            transition: .3s;
+            height: var(--navbar-height);
+        }
+        [data-bs-theme="dark"] .navbar {
+            background: rgba(17,24,39,.92) !important;
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--dark) !important;
+            letter-spacing: -.5px;
+        }
+        [data-bs-theme="dark"] .navbar-brand {
+            color: #f9fafb !important;
+        }
+        .nav-link {
+            font-weight: 500;
+            color: var(--text) !important;
+            transition: .25s;
+            padding: 6px 14px !important;
+            border-radius: 8px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--green) !important;
+            background: rgba(21,145,90,.08);
+        }
+        [data-bs-theme="dark"] .nav-link {
+            color: #d1d5db !important;
+        }
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            transition: .3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            font-size: .95rem;
+        }
+        .theme-btn:hover {
+            border-color: var(--green);
+            color: var(--green);
+        }
+        [data-bs-theme="dark"] .theme-btn {
+            color: #d1d5db;
+            border-color: #374151;
+        }
+        .btn-nav-login {
+            background: var(--green);
+            color: #fff !important;
+            border: none;
+            padding: 9px 22px !important;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: .3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-nav-login:hover {
+            background: var(--green-dark);
+            transform: translateY(-1px);
+            color: #fff !important;
+        }
+        .btn-nav-outline {
+            border: 2px solid var(--green);
+            color: var(--green) !important;
+            padding: 7px 20px !important;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: .3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-nav-outline:hover {
+            background: var(--green);
+            color: #fff !important;
+        }
+
+        /* ── FLASH MESSAGES ── */
+        .flash-container {
+            position: fixed;
+            top: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            width: max-content;
+            max-width: 90vw;
+        }
+        .flash-msg {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,.15);
+            animation: slideDown .3s ease;
+            margin-bottom: 8px;
+        }
+        .flash-msg.success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .flash-msg.danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .flash-msg.warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .flash-msg.info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            background: #0d1117;
+            color: #e5e7eb;
+            padding-top: 70px;
+        }
+        .footer-brand {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .footer-desc {
+            color: #9ca3af;
+            font-size: .88rem;
+            line-height: 1.7;
+            margin-bottom: 22px;
+        }
+        .footer-social a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            background: #1f2937;
+            border-radius: 8px;
+            color: #9ca3af;
+            margin-right: 8px;
+            transition: .3s;
+            font-size: .9rem;
+            text-decoration: none;
+        }
+        .footer-social a:hover {
+            background: var(--green);
+            color: #fff;
+        }
+        .footer-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 18px;
+        }
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: .88rem;
+            transition: .25s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .footer-links a:hover {
+            color: var(--green);
+            padding-left: 4px;
+        }
+        .footer-links a::before {
+            content: '→';
+            font-size: .7rem;
+            opacity: 0;
+            transition: .25s;
+        }
+        .footer-links a:hover::before { opacity: 1; }
+        .footer-contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: #9ca3af;
+            font-size: .88rem;
+        }
+        .footer-contact-item i { color: var(--green); width: 16px; }
+        .footer-bottom {
+            border-top: 1px solid #1f2937;
+            margin-top: 40px;
+            padding: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .footer-bottom p {
+            margin: 0;
+            font-size: .82rem;
+            color: #6b7280;
+        }
+
+        /* ── DARK MODE GLOBAL OVERRIDES ── */
+        body[data-bs-theme="dark"] {
+            background-color: #111827;
+            color: white;
+        }
+        body[data-bs-theme="dark"] .card {
+            background-color: #1f2937;
+            color: white;
+            border-color: #374151;
+        }
+        body[data-bs-theme="dark"] .table { color: white; }
+        body[data-bs-theme="dark"] .form-control,
+        body[data-bs-theme="dark"] .form-select {
+            background-color: #374151;
+            color: white;
+            border-color: #4b5563;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body data-bs-theme="light">
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+    <img src="{{ url_for('static', filename='estate-logo.png') }}" alt="EstateSync Logo" style="width: 42px; height: 42px; border-radius: 10px;">
+           EstateSync
+            </a>                <div style="width:0px;height:0px;background:linear-gradient(135deg,var(--green),var(--green-light));border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                    <i class="fa-solid fa-building" style="color:#fff;font-size:.9rem;"></i>
+                </div>
+              
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mx-auto gap-1">
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'society_map' %}active{% endif %}" href="/map">Live Map</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'contact' %}active{% endif %}" href="/contact">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'privacy' %}active{% endif %}" href="/privacy">Privacy</a></li>
+                    
+                    {% if session.get('role') == 'Admin' %}
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="/admin"><i class="fa-solid fa-shield-halved me-1"></i>Admin</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.endpoint == 'admin_services' %}active{% endif %}" href="/admin_services"><i class="fa-solid fa-file-invoice-dollar me-1"></i>Billing</a></li>
+                    {% endif %}
+                   {% if session.get('role') == 'Resident' %}
+<li class="nav-item"><a class="nav-link {% if request.endpoint == 'resident_dashboard' %}active{% endif %}" href="/resident"><i class="fa-solid fa-gauge me-1"></i>Dashboard</a></li>
+<li class="nav-item"><a class="nav-link {% if request.endpoint == 'resident_services' %}active{% endif %}" href="/resident_services"><i class="fa-solid fa-wrench me-1"></i>Services</a></li>
+{% endif %}
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <button id="themeToggle" class="theme-btn" title="Toggle theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    {% if session.get('loggedin') %}
+                        <a href="/profile" class="btn btn-sm" style="background: transparent; color: var(--text); border: 1px solid var(--border); padding: 8px 15px; border-radius: 10px; font-weight: 600;">
+                            <i class="fa-solid fa-circle-user fs-5 text-success align-middle"></i>
+                        </a>
+                        <a href="/logout" class="btn-nav-outline btn btn-sm">
+                            <i class="fa-solid fa-right-from-bracket"></i> <span class="d-none d-sm-inline">Logout</span>
+                        </a>
+                    {% else %}
+                        <a href="/login" class="btn-nav-login btn btn-sm">
+                            <i class="fa-solid fa-user"></i> <span class="d-none d-sm-inline">Login</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-msg {{ category }}">
+                        <i class="fa-solid {% if category=='success' %}fa-circle-check{% elif category=='danger' %}fa-circle-xmark{% elif category=='warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} me-2"></i>{{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="container-fluid px-0">
+        {% block content %}{% endblock %}
+    </div>
+
+   <footer>
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-4">
+                    <div class="footer-brand">
+                        <img src="{{ url_for('static', filename='estate-logo.png') }}" alt="EstateSync Logo" style="height: 42px; width: auto; border-radius: 10px;">
+                        EstateSync
+                    </div>
+                    <p class="footer-desc">A smart housing society management platform with real-time plot tracking, secure payment handling, and full administrative control.</p>
+                    <div class="footer-social">
+                        <a href="https://facebook.com" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://instagram.com" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="https://twitter.com" target="_blank"><i class="fab fa-x-twitter"></i></a>
+                        <a href="https://linkedin.com" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <div class="footer-title">Navigation</div>
+                    <ul class="footer-links">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/map">Live Map</a></li>
+                        <li><a href="/login">Login</a></li>
+                        <li><a href="/signup">Sign Up</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <div class="footer-title">Admin</div>
+                    <ul class="footer-links">
+                        <li><a href="/admin">Dashboard</a></li>
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a href="/contact">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4">
+                    <div class="footer-title">Contact Info</div>
+                    <div class="footer-contact-item"><i class="fa-solid fa-phone"></i> +92 300 1234567</div>
+                    <div class="footer-contact-item"><i class="fa-solid fa-envelope"></i> support@estatesync.com</div>
+                    <div class="footer-contact-item"><i class="fa-solid fa-location-dot"></i> PUGC, Gujranwala, Pakistan</div>
+                    <div class="footer-contact-item"><i class="fa-solid fa-graduation-cap"></i> BSCS Final Project — 2026</div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 EstateSync. All Rights Reserved. Built by Group 06 , PUGC.</p>
+                <p><a href="/privacy" style="color:#6b7280;text-decoration:none;transition:.2s;" onmouseover="this.style.color='#15915a'" onmouseout="this.style.color='#6b7280'">Privacy Policy</a> &nbsp;·&nbsp; <a href="/contact" style="color:#6b7280;text-decoration:none;" onmouseover="this.style.color='#15915a'" onmouseout="this.style.color='#6b7280'">Contact</a></p>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ── THEME TOGGLE ──
+        const toggleBtn = document.getElementById("themeToggle");
+        const savedTheme = localStorage.getItem("estatesync-theme") || "light";
+        document.body.setAttribute("data-bs-theme", savedTheme);
+        updateThemeIcon(savedTheme);
+
+        toggleBtn.addEventListener("click", () => {
+            const current = document.body.getAttribute("data-bs-theme");
+            const next = current === "light" ? "dark" : "light";
+            document.body.setAttribute("data-bs-theme", next);
+            localStorage.setItem("estatesync-theme", next);
+            updateThemeIcon(next);
+        });
+
+        function updateThemeIcon(theme) {
+            const icon = toggleBtn.querySelector("i");
+            icon.className = theme === "light" ? "fa-solid fa-moon" : "fa-solid fa-sun";
+        }
+
+        // ── NAVBAR SCROLL EFFECT ──
+        window.addEventListener("scroll", () => {
+            const nav = document.querySelector(".navbar");
+            if (window.scrollY > 40) {
+                nav.style.padding = "8px 0";
+                nav.style.boxShadow = "0 4px 30px rgba(0,0,0,.12)";
+            } else {
+                nav.style.padding = "14px 0";
+                nav.style.boxShadow = "0 2px 20px rgba(0,0,0,.07)";
+            }
+        });
+
+        // ── AUTO-DISMISS FLASH ──
+        setTimeout(() => {
+            document.querySelectorAll(".flash-msg").forEach(el => {
+                el.style.transition = "opacity .5s";
+                el.style.opacity = "0";
+                setTimeout(() => el.remove(), 500);
+            });
+        }, 4000);
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

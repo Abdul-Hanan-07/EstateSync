@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}My Profile | EstateSync{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0" style="border-radius: 20px; overflow: hidden;">
+                
+                <div class="card-header text-center text-white py-5" style="background: linear-gradient(135deg, #15915a, #0d7547);">
+                    <i class="fa-solid fa-circle-user fa-5x mb-3"></i>
+                    
+                    <h3 class="fw-bold mb-0">
+                        {% if user.Role == 'Admin' %}
+                            System Administrator
+                        {% else %}
+                            {{ user.Full_Name if user.Full_Name else 'Valued Resident' }}
+                        {% endif %}
+                    </h3>
+                    
+                    <span class="badge bg-light text-dark mt-2 px-3 py-2">
+                        <i class="fa-solid fa-shield-halved me-1"></i> {{ user.Role }}
+                    </span>
+                </div>
+
+                <div class="card-body p-5">
+                    <h5 class="fw-bold mb-4 text-success border-bottom pb-2">
+                        <i class="fa-solid fa-address-card me-2"></i>Account Details
+                    </h5>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold text-uppercase">Account Email</label>
+                            <p class="fs-5 mb-0 fw-medium"><i class="fa-solid fa-envelope text-success me-2"></i>{{ user.Login_Email }}</p>
+                        </div>
+
+                        {% if user.Role == 'Resident' %}
+                            {% if user.Full_Name %}
+                                <div class="col-md-6">
+                                    <label class="text-muted small fw-bold text-uppercase">Phone Number</label>
+                                    <p class="fs-5 mb-0 fw-medium"><i class="fa-solid fa-phone text-success me-2"></i>{{ user.Phone_Number }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small fw-bold text-uppercase">CNIC Number</label>
+                                    <p class="fs-5 mb-0 fw-medium"><i class="fa-solid fa-id-card text-success me-2"></i>{{ user.CNIC }}</p>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="text-muted small fw-bold text-uppercase">Permanent Address</label>
+                                    <p class="fs-5 mb-0 fw-medium"><i class="fa-solid fa-location-dot text-success me-2"></i>{{ user.Permanent_Address }}</p>
+                                </div>
+                            {% else %}
+                                <div class="col-12 text-center py-3">
+                                    <p class="text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Profile details pending administrative review.</p>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="col-md-6">
+                                <label class="text-muted small fw-bold text-uppercase">Access Level</label>
+                                <p class="fs-5 mb-0 fw-medium"><i class="fa-solid fa-key text-success me-2"></i>Full Administrative Privileges</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center mt-5">
+                        <a href="/{{ 'admin' if user.Role == 'Admin' else 'resident' }}" class="btn btn-outline-success px-4 fw-bold rounded-pill">
+                            <i class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
