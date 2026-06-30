@@ -1,19 +1,26 @@
+import os
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, flash, session, jsonify, url_for
 import mysql.connector
 from functools import wraps
 import random
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf.csrf import CSRFProtect
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "estatesync_secret_key_123"
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
+
+csrf = CSRFProtect(app)
 
 # db connection setup
 def get_db_connection():
     return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='',
-        database='estatesync_db'
+        host=os.environ.get('DB_HOST', 'localhost'),
+        user=os.environ.get('DB_USER', 'root'),
+        password=os.environ.get('DB_PASSWORD', ''),
+        database=os.environ.get('DB_NAME', 'estatesync')
     )
 
 # function to save audit logs
@@ -93,22 +100,32 @@ def request_booking():
             flash("Error: Member profile not found. Please contact administration.", "danger")
             return redirect('/map')
             
-        cursor.execute("SELECT Status FROM PLOTS WHERE Plot_ID = %s", (plot_id,))
-        plot = cursor.fetchone()
-        if plot['Status'] != 'AVAILABLE':
-            flash("Sorry, this plot is no longer available!", "warning")
-            return redirect('/map')
+        # call stored procedure to book plot in a secure database transaction
+        cursor.execute("SET @success = 0;")
+        cursor.execute("CALL sp_book_plot(%s, %s, %s, @success);", (int(plot_id), int(member['Member_ID']), int(plan_id)))
+        # retrieve output parameter
+        cursor.execute("SELECT @success;")
+        success_res = cursor.fetchone()
+        
+        # MySQL Cursor returns dictionary if dictionary=True, let's get the value
+        is_success = False
+        if success_res:
+            # if dictionary=True, keys are column names (e.g. '@success')
+            is_success = list(success_res.values())[0] if isinstance(success_res, dict) else success_res[0]
             
-        cursor.execute("INSERT INTO BOOKINGS (Plot_ID, Member_ID, Plan_ID, Booking_Date, Booking_Status) VALUES (%s, %s, %s, CURDATE(), 'ACTIVE')", (plot_id, member['Member_ID'], plan_id))
-        cursor.execute("UPDATE PLOTS SET Status = 'SOLD' WHERE Plot_ID = %s", (plot_id,))
-        log_audit(session.get('user_id'), 'INSERT', 'BOOKINGS', 'None', f'Plot ID {plot_id} booked')
-        conn.commit()
-        flash("Plot successfully booked!", "success")
-        return redirect('/resident')
+        if is_success:
+            conn.commit()
+            flash("Plot successfully booked!", "success")
+            return redirect('/resident')
+        else:
+            flash("Booking failed. Plot might no longer be available.", "warning")
+            return redirect('/map')
+    except Exception as e:
+        flash("Error processing booking request.", "danger")
+        return redirect('/map')
     finally:
         cursor.close()
         conn.close()
-    return redirect('/map')
 
 # admin rejects a payment
 @app.route('/reject_payment/<int:payment_id>', methods=['POST'])
@@ -116,26 +133,38 @@ def request_booking():
 def reject_payment(payment_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE PAYMENTS SET Status = 'Rejected' WHERE Payment_ID = %s", (payment_id,))
-    log_audit(session.get('user_id'), 'UPDATE', 'PAYMENTS', 'Pending', 'Rejected')
-    conn.commit()
-    cursor.close()
-    conn.close()
-    flash("Payment rejected.", "danger")
+    try:
+        cursor.execute("UPDATE PAYMENTS SET Status = 'Rejected' WHERE Payment_ID = %s", (payment_id,))
+        log_audit(session.get('user_id'), 'UPDATE', 'PAYMENTS', f'Pending (Payment ID {payment_id})', 'Rejected')
+        conn.commit()
+        flash("Payment rejected.", "danger")
+    except Exception as e:
+        flash("Error rejecting payment.", "danger")
+    finally:
+        cursor.close()
+        conn.close()
     return redirect('/admin')
 
 # update plot status
+@csrf.exempt
 @app.route('/update_plot/<int:plot_id>', methods=['POST'])
 @admin_required
 def update_plot(plot_id):
     new_status = request.form.get('status')
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE PLOTS SET Status = %s WHERE Plot_ID = %s", (new_status, plot_id))
-    log_audit(session.get('user_id'), 'UPDATE', 'PLOTS', 'Previous Status', new_status)
-    conn.commit()
-    cursor.close()
-    conn.close()
+    try:
+        cursor.execute("SELECT Status FROM PLOTS WHERE Plot_ID = %s", (plot_id,))
+        old_plot = cursor.fetchone()
+        old_status = old_plot[0] if old_plot else 'Unknown'
+        cursor.execute("UPDATE PLOTS SET Status = %s WHERE Plot_ID = %s", (new_status, plot_id))
+        log_audit(session.get('user_id'), 'UPDATE', 'PLOTS', old_status, new_status)
+        conn.commit()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        cursor.close()
+        conn.close()
     return jsonify({'success': True})
 
 # resident dashboard
@@ -149,7 +178,8 @@ def resident_dashboard():
     bookings, payments = [], []
     if member:
         cursor.execute("""
-            SELECT b.*, p.Plot_Number, p.Size_Marla, p.Total_Price, bl.Block_Name, ip.Plan_Name, ip.Duration_Months
+            SELECT b.*, p.Plot_Number, p.Size_Marla, p.Total_Price, bl.Block_Name, ip.Plan_Name, ip.Duration_Months,
+                   COALESCE((SELECT SUM(Amount_Paid) FROM PAYMENTS WHERE Booking_ID = b.Booking_ID AND Status = 'Approved'), 0) AS Total_Paid
             FROM BOOKINGS b
             JOIN PLOTS p ON b.Plot_ID = p.Plot_ID
             JOIN BLOCKS bl ON p.Block_ID = bl.Block_ID
@@ -171,17 +201,42 @@ def resident_dashboard():
 @login_required
 def submit_payment():
     booking_id = request.form['booking_id']
-    amount = request.form['amount']
     receipt = request.form['receipt_num']
     mode = request.form['payment_mode']
+
+    try:
+        amount = float(request.form['amount'])
+        if amount <= 0 or amount > 9999999999:
+            flash("Invalid payment amount.", "danger")
+            return redirect('/resident')
+    except ValueError:
+        flash("Invalid payment amount.", "danger")
+        return redirect('/resident')
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO PAYMENTS (Booking_ID, Receipt_Number, Amount_Paid, Payment_Date, Payment_Mode, Status) VALUES (%s, %s, %s, CURDATE(), %s, 'Pending')", (booking_id, receipt, amount, mode))
-    log_audit(session.get('user_id'), 'INSERT', 'PAYMENTS', 'None', f'New Payment {receipt}')
-    conn.commit()
-    cursor.close()
-    conn.close()
-    flash("Payment submitted!", "success")
+    try:
+        # Check if the booking belongs to the logged-in resident
+        cursor.execute("SELECT Member_ID FROM MEMBERS WHERE Email = %s", (session['email'],))
+        member = cursor.fetchone()
+        if not member:
+            flash("Error: Member profile not found.", "danger")
+            return redirect('/resident')
+            
+        cursor.execute("SELECT 1 FROM BOOKINGS WHERE Booking_ID = %s AND Member_ID = %s AND Booking_Status = 'ACTIVE'", (booking_id, member[0]))
+        if not cursor.fetchone():
+            flash("Unauthorized request.", "danger")
+            return redirect('/resident')
+
+        cursor.execute("INSERT INTO PAYMENTS (Booking_ID, Receipt_Number, Amount_Paid, Payment_Date, Payment_Mode, Status) VALUES (%s, %s, %s, CURDATE(), %s, 'Pending')", (booking_id, receipt, amount, mode))
+        log_audit(session.get('user_id'), 'INSERT', 'PAYMENTS', 'None', f'New Payment {receipt}')
+        conn.commit()
+        flash("Payment submitted!", "success")
+    except Exception as e:
+        flash("Error submitting payment.", "danger")
+    finally:
+        cursor.close()
+        conn.close()
     return redirect('/resident')
 
 # admin dashboard
@@ -210,7 +265,6 @@ def admin_dashboard():
         ORDER BY u.User_ID DESC
     ''')
     users = cursor.fetchall()
-    print("DEBUG: Users data retrieved:", users)
     
     # load contact messages
     contact_messages = []
@@ -233,6 +287,14 @@ def admin_dashboard():
     cursor.execute("SELECT SUM(Amount_Paid) as total FROM PAYMENTS WHERE Status = 'Approved'")
     revenue = cursor.fetchone()['total'] or 0
     
+    # retrieve summary from SQL View
+    block_summary = []
+    try:
+        cursor.execute("SELECT * FROM view_society_revenue_summary")
+        block_summary = cursor.fetchall()
+    except Exception as e:
+        print(f"Database View Error: {e}")
+        
     cursor.close()
     conn.close()
     
@@ -240,6 +302,7 @@ def admin_dashboard():
                            pending_payments=pending_payments, 
                            users=users,
                            contact_messages=contact_messages,
+                           block_summary=block_summary,
                            stats={
                                'total_plots': total_plots,
                                'sold_plots': sold_plots,
@@ -253,12 +316,16 @@ def admin_dashboard():
 def approve_payment(payment_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE PAYMENTS SET Status = 'Approved' WHERE Payment_ID = %s", (payment_id,))
-    log_audit(session.get('user_id'), 'UPDATE', 'PAYMENTS', 'Pending', 'Approved')
-    conn.commit()
-    cursor.close()
-    conn.close()
-    flash("Payment approved!", "success")
+    try:
+        cursor.execute("UPDATE PAYMENTS SET Status = 'Approved' WHERE Payment_ID = %s", (payment_id,))
+        log_audit(session.get('user_id'), 'UPDATE', 'PAYMENTS', f'Pending (Payment ID {payment_id})', 'Approved')
+        conn.commit()
+        flash("Payment approved!", "success")
+    except Exception as e:
+        flash("Error approving payment.", "danger")
+    finally:
+        cursor.close()
+        conn.close()
     return redirect('/admin')
 
 # login logic
@@ -322,6 +389,25 @@ def pay_bill(bill_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        # Check if the bill belongs to this resident
+        cursor.execute("SELECT Member_ID FROM MEMBERS WHERE Email = %s", (session['email'],))
+        member = cursor.fetchone()
+        
+        if not member:
+            flash("Profile not found.", "danger")
+            return redirect('/resident_services')
+            
+        cursor.execute("""
+            SELECT 1 FROM SERVICE_BILLS sb
+            JOIN PLOTS p ON sb.Plot_ID = p.Plot_ID
+            JOIN BOOKINGS bk ON p.Plot_ID = bk.Plot_ID
+            WHERE sb.Bill_ID = %s AND bk.Member_ID = %s AND bk.Booking_Status = 'ACTIVE'
+        """, (bill_id, member[0]))
+        
+        if not cursor.fetchone():
+            flash("Unauthorized request.", "danger")
+            return redirect('/resident_services')
+
         cursor.execute("UPDATE SERVICE_BILLS SET Issue_Status = 'PAID' WHERE Bill_ID = %s", (bill_id,))
         log_audit(session.get('user_id'), 'UPDATE', 'SERVICE_BILLS', 'UNPAID', 'PAID')
         conn.commit()
@@ -420,6 +506,50 @@ def profile():
     
     return render_template('profile.html', user=user_data)
 
+# update user profile
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    if session.get('role') != 'Resident':
+        flash("Profile update is only available for residents.", "warning")
+        return redirect('/profile')
+        
+    name = request.form.get('name')
+    phone = request.form.get('phone')
+    address = request.form.get('address')
+    
+    if not name or not phone or not address:
+        flash("All fields are required.", "danger")
+        return redirect('/profile')
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Get old values for logging
+        cursor.execute("SELECT Full_Name, Phone_Number, Permanent_Address FROM MEMBERS WHERE User_ID = %s", (session['user_id'],))
+        old_data = cursor.fetchone()
+        
+        cursor.execute("""
+            UPDATE MEMBERS 
+            SET Full_Name = %s, Phone_Number = %s, Permanent_Address = %s 
+            WHERE User_ID = %s
+        """, (name, phone, address, session['user_id']))
+        
+        # log audit
+        old_val = f"Name: {old_data[0]}, Phone: {old_data[1]}, Address: {old_data[2]}" if old_data else "None"
+        new_val = f"Name: {name}, Phone: {phone}, Address: {address}"
+        log_audit(session.get('user_id'), 'UPDATE', 'MEMBERS', old_val, new_val)
+        
+        conn.commit()
+        flash("Profile updated successfully!", "success")
+    except Exception as e:
+        flash(f"Error updating profile: {str(e)}", "danger")
+    finally:
+        cursor.close()
+        conn.close()
+        
+    return redirect('/profile')
+
 # signup logic
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -427,7 +557,7 @@ def signup():
         name = request.form.get('name')
         email = request.form['email']
         password = request.form['password']
-        role = request.form['role']
+        role = 'Resident'  # Public signup is always Resident
         
         cnic = request.form.get('cnic', '')
         phone = request.form.get('phone', '')
@@ -467,14 +597,21 @@ def logout():
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
-        name, email, subject, msg = request.form['name'][:100], request.form['email'][:100], request.form['subject'][:200], request.form['message'][:500]
+        name = request.form['name'][:100]
+        email = request.form['email'][:100]
+        subject = request.form['subject'][:200]
+        msg = request.form['message'][:500]
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO CONTACT_MESSAGES (Name, Email, Subject, Message) VALUES (%s, %s, %s, %s)', (name, email, subject, msg))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        flash("Message sent!", "success")
+        try:
+            cursor.execute('INSERT INTO CONTACT_MESSAGES (Name, Email, Subject, Message) VALUES (%s, %s, %s, %s)', (name, email, subject, msg))
+            conn.commit()
+            flash("Message sent successfully!", "success")
+        except Exception as e:
+            flash("Error sending message. Please try again.", "danger")
+        finally:
+            cursor.close()
+            conn.close()
     return render_template('contactus.html')
 
 @app.route('/privacy')
@@ -491,10 +628,15 @@ def inject_request():
 def view_audit_logs():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM AUDIT_LOGS ORDER BY Timestamp DESC")
-    logs = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    logs = []
+    try:
+        cursor.execute("SELECT * FROM AUDIT_LOGS ORDER BY Timestamp DESC")
+        logs = cursor.fetchall()
+    except Exception as e:
+        flash("Error loading audit logs.", "danger")
+    finally:
+        cursor.close()
+        conn.close()
     return render_template('audit.html', logs=logs)
 
 if __name__ == '__main__':

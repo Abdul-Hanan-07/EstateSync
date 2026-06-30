@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Contact Us | EstateSync{% endblock %}
 
@@ -177,6 +177,7 @@
                             <p class="text-secondary mb-4">Fill out the form below and we'll get back to you within 24 hours.</p>
 
                             <form action="/contact" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <div class="form-floating">

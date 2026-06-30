@@ -79,6 +79,7 @@
                         <td>
                             {% if bill.Issue_Status == 'UNPAID' %}
                             <form action="/pay_bill/{{ bill.Bill_ID }}" method="POST" style="display:inline;" onsubmit="return confirm('Confirm payment for this service bill?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="btn btn-sm btn-success fw-bold">
                                     <i class="fa-solid fa-credit-card me-1"></i> Pay Now
                                 </button>

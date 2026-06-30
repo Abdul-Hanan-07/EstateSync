@@ -42,7 +42,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="text-muted small fw-bold text-uppercase">CNIC Number</label>
-                                    <p class="fs-5 mb-0 fw-medium"><i class="fa-solid fa-id-card text-success me-2"></i>{{ user.CNIC }}</p>
+                                    <p class="fs-5 mb-0 fw-medium"><i class="fa-solid fa-id-card text-success me-2"></i>{{ user.CNIC[:5] }}*******{{ user.CNIC[-1:] }}</p>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="text-muted small fw-bold text-uppercase">Permanent Address</label>
@@ -61,7 +61,15 @@
                         {% endif %}
                     </div>
                     
-                    <div class="text-center mt-5">
+                    {% if user.Role == 'Resident' and user.Full_Name %}
+                    <div class="text-center mt-4">
+                        <button type="button" class="btn btn-success fw-bold px-4 rounded-pill" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="fa-solid fa-user-edit me-2"></i>Edit Profile Details
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-4">
                         <a href="/{{ 'admin' if user.Role == 'Admin' else 'resident' }}" class="btn btn-outline-success px-4 fw-bold rounded-pill">
                             <i class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard
                         </a>
@@ -71,4 +79,38 @@
         </div>
     </div>
 </div>
+
+{% if user.Role == 'Resident' and user.Full_Name %}
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-edit me-2"></i>Edit Profile Info</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/update_profile" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-body text-start p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Full Name</label>
+                        <input type="text" name="name" class="form-control" value="{{ user.Full_Name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phone Number</label>
+                        <input type="text" name="phone" class="form-control" value="{{ user.Phone_Number }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Permanent Address</label>
+                        <textarea name="address" class="form-control" rows="3" required>{{ user.Permanent_Address }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success fw-bold">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

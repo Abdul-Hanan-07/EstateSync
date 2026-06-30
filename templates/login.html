@@ -1,169 +1,9 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}EstateSync Login{% endblock %}
 
 {% block extra_css %}
-<style>
-    /* Scoped your exact CSS so it fits perfectly inside base.html */
-    .auth-wrapper {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 40px 15px;
-        min-height: 85vh;
-    }
-
-    .main-card {
-        width: 1000px;
-        min-height: 600px;
-        display: flex;
-        border-radius: 25px;
-        overflow: hidden;
-        background: white;
-        box-shadow: 0 25px 50px rgba(0,0,0,.35);
-    }
-
-    .brand-section {
-        width: 45%;
-        background: linear-gradient(160deg, #075e35, #1fa463);
-        color: white;
-        padding: 55px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .brand-logo {
-        width: 80px;
-        height: 80px;
-        border-radius: 20px;
-        background: white;
-        color: #15915a;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 40px;
-        margin-bottom: 25px;
-    }
-
-    .brand-section h1 { font-size: 45px; color: white; margin-bottom: 5px; }
-    .brand-section h3 { font-weight: 500; margin-top: 10px; color: white; }
-    .brand-section p { margin-top: 20px; line-height: 1.7; color: white; opacity: 0.9; }
-
-    .stats {
-        display: flex;
-        gap: 25px;
-        margin-top: 45px;
-    }
-    .stats h2 { font-size: 25px; color: white; margin-bottom: 0; }
-    .stats p { margin: 0; color: white; opacity: 0.8; }
-
-    .login-section {
-        width: 55%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: white;
-    }
-    .login-card { width: 75%; text-align: left; }
-    .login-card h2 { font-size: 32px; font-weight: 600; color: #222; margin-bottom: 5px; }
-    .login-card > p { color: #777; margin-bottom: 25px; }
-
-    .login-card label {
-        font-size: 14px;
-        font-weight: 600;
-        display: block;
-        margin-top: 15px;
-        color: #333;
-    }
-
-    .input-box {
-        height: 45px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        padding: 0 15px;
-        margin-top: 8px;
-        background: #fff;
-    }
-    .input-box i { color: #15915a; margin-right: 10px; }
-    .input-box input { border: none; outline: none; width: 100%; background: transparent; }
-
-    .login-card select {
-        width: 100%;
-        height: 45px;
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        padding: 0 15px;
-        margin-top: 8px;
-        outline: none;
-        background: #fff;
-    }
-
-    .options {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 15px;
-        font-size: 13px;
-    }
-    .options label { margin-top: 0; font-weight: 500; display: flex; align-items: center; cursor: pointer; }
-    .options input { margin-right: 8px; }
-    .options a, .signup a { color: #15915a; text-decoration: none; font-weight: 600; }
-
-    .login-btn {
-        margin-top: 25px;
-        width: 100%;
-        height: 48px;
-        border: none;
-        border-radius: 10px;
-        background: #15915a;
-        color: white;
-        font-size: 17px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: background 0.3s;
-    }
-    .login-btn:hover { background: #0d7547; }
-    .signup { text-align: center; margin-top: 25px; color: #777; }
-
-    /* MODAL */
-    .auth-modal {
-        display: none;
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.6);
-        justify-content: center;
-        align-items: center;
-        z-index: 1050;
-    }
-    .modal-box {
-        background: white;
-        padding: 30px;
-        border-radius: 15px;
-        width: 350px;
-        text-align: center;
-        position: relative;
-    }
-    .modal-box h2 { font-size: 24px; margin-bottom: 15px; }
-    .modal-box input {
-        width: 100%; padding: 12px; margin: 15px 0;
-        border: 1px solid #ddd; border-radius: 8px; outline: none;
-    }
-    .modal-box button {
-        width: 100%; padding: 12px; background: #15915a;
-        color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
-    }
-    .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-weight: bold; font-size: 18px; color: #777; }
-
-    @media(max-width:850px) {
-        .main-card { width: 100%; flex-direction: column; }
-        .brand-section, .login-section { width: 100%; }
-        .brand-section { padding: 40px 20px; text-align: center; align-items: center; }
-        .login-card { width: 90%; margin: 40px 0; }
-        .stats { justify-content: center; }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -192,6 +32,7 @@
                 <p>Login to continue to EstateSync</p>
 
                 <form action="/login" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <label>Email Address</label>
                     <div class="input-box">
                         <i class="fa-solid fa-envelope"></i>
@@ -204,12 +45,7 @@
                         <input type="password" name="password" placeholder="Enter password" required>
                     </div>
 
-                    <div class="options">
-                        <label>
-                            <input type="checkbox"> Remember me
-                        </label>
-                        <a href="#" onclick="openForgot()">Forgot Password?</a>
-                    </div>
+
 
                     <label>Login As</label>
                     <select name="role">
@@ -229,28 +65,4 @@
     </div>
 </div>
 
-<div id="forgotModal" class="auth-modal">
-    <div class="modal-box">
-        <h2>Forgot Password</h2>
-        <input type="email" id="emailForgot" placeholder="Enter your email">
-        <button onclick="sendResetRequest()">Send Reset Link</button>
-        <span onclick="closeForgot()" class="close-btn">X</span>
-    </div>
-</div>
-
-<script>
-    function openForgot(){
-        document.getElementById("forgotModal").style.display = "flex";
-    }
-
-    function closeForgot(){
-        document.getElementById("forgotModal").style.display = "none";
-    }
-
-    function sendResetRequest() {
-        let email = document.getElementById("emailForgot").value;
-        alert("Reset link request sent for: " + email);
-        closeForgot();
-    }
-</script>
 {% endblock %}

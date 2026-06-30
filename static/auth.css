@@ -1,0 +1,172 @@
+    /* Scoped your exact CSS so it fits perfectly inside base.html */
+    .auth-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 15px;
+        min-height: 85vh;
+    }
+
+    .main-card {
+        width: 1000px;
+        min-height: 600px;
+        display: flex;
+        border-radius: 25px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 25px 50px rgba(0,0,0,.35);
+    }
+
+    .brand-section {
+        width: 45%;
+        background: linear-gradient(160deg, #075e35, #1fa463);
+        color: white !important;
+        padding: 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .brand-section h1, .brand-section h3, .brand-section p { color: white !important; }
+
+    .brand-logo {
+        width: 80px;
+        height: 80px;
+        background: white;
+        color: #15915a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+    }
+
+    .brand-section h1 { font-size: 45px; margin-bottom: 5px; }
+    .brand-section h3 { font-weight: 500; margin-top: 10px; }
+    .brand-section p { margin-top: 20px; line-height: 1.7; opacity: 0.9; }
+
+    .stats {
+        display: flex;
+        gap: 25px;
+        margin-top: 45px;
+    }
+    .stats h2 { font-size: 25px; color: white; margin-bottom: 0; }
+    .stats p { margin: 0; color: white; opacity: 0.9; }
+
+    .login-section {
+        width: 55%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        padding: 20px 0; /* Added slight padding for longer forms */
+    }
+
+    .login-card { width: 75%; text-align: left; }
+    .login-card h2 { font-size: 30px; margin-bottom: 10px; color: #222;}
+    .login-card > p { color: #777; margin-bottom: 20px; }
+
+    .login-card label {
+        display: block;
+        margin-top: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .input-box {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 0 15px;
+        margin-top: 6px;
+        height: 45px;
+        background: #fff;
+    }
+
+    .input-box i { color: #15915a; margin-right: 10px; width: 16px; text-align: center;}
+    .input-box input { border: none; outline: none; width: 100%; background: transparent; }
+
+    .login-card select {
+        width: 100%;
+        height: 45px;
+        padding: 0 15px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        margin-top: 6px;
+        background: #fff;
+        outline: none;
+    }
+
+    .options {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+        font-size: 13px;
+    }
+    .options label { margin-top: 0; font-weight: 500; display: flex; align-items: center; cursor: pointer; }
+    .options input { margin-right: 8px; }
+    .options a, .signup a { color: #15915a; text-decoration: none; font-weight: 600; }
+
+    .login-btn {
+        width: 100%;
+        height: 48px;
+        margin-top: 25px;
+        border: none;
+        border-radius: 10px;
+        background: #15915a;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .login-btn:hover { background: #0d7547; }
+
+    .signup { text-align: center; margin-top: 15px; color: #777;}
+    .signup a { color: #15915a; text-decoration: none; font-weight: 600;}
+
+    /* MODAL */
+    .auth-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        justify-content: center;
+        align-items: center;
+        z-index: 1050;
+    }
+    .modal-box {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        width: 350px;
+        text-align: center;
+        position: relative;
+    }
+    .modal-box h2 { font-size: 24px; margin-bottom: 15px; }
+    .modal-box input {
+        width: 100%; padding: 12px; margin: 15px 0;
+        border: 1px solid #ddd; border-radius: 8px; outline: none;
+    }
+    .modal-box button {
+        width: 100%; padding: 12px; background: #15915a;
+        color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+    }
+    .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-weight: bold; font-size: 18px; color: #777; }
+
+    /* Smooth transition for the dynamic fields */
+    #residentFields {
+        transition: all 0.3s ease;
+    }
+
+    @media(max-width:850px) {
+        .main-card { flex-direction: column; width: 100%; }
+        .brand-section, .login-section { width: 100%; }
+        .brand-section { padding: 40px 20px; text-align: center; align-items: center; }
+        .login-card { margin: 40px 0; width: 90%; }
+        .stats { justify-content: center; }
+    }

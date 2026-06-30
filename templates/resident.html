@@ -70,33 +70,47 @@
                 </div>
             </div>
             <div class="card-body p-4">
-                <div class="row g-4 mb-4">
-                    <div class="col-md-3 col-6 text-center">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-2 col-4 text-center">
                         <div class="stat-card bg-success bg-opacity-10">
-                            <div class="stat-icon text-success"><i class="fa-solid fa-ruler-combined"></i></div>
-                            <div class="stat-value text-success">{{ booking.Size_Marla }}</div>
-                            <div class="stat-label">Marla</div>
+                            <div class="stat-icon text-success" style="font-size: 1.8rem;"><i class="fa-solid fa-ruler-combined"></i></div>
+                            <div class="stat-value text-success" style="font-size: 1.2rem;">{{ booking.Size_Marla }}</div>
+                            <div class="stat-label" style="font-size: 0.8rem;">Marla</div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6 text-center">
+                    <div class="col-md-2 col-4 text-center">
                         <div class="stat-card bg-primary bg-opacity-10">
-                            <div class="stat-icon text-primary"><i class="fa-solid fa-tag"></i></div>
-                            <div class="stat-value text-primary">{{ booking.Category }}</div>
-                            <div class="stat-label">Category</div>
+                            <div class="stat-icon text-primary" style="font-size: 1.8rem;"><i class="fa-solid fa-tag"></i></div>
+                            <div class="stat-value text-primary" style="font-size: 1.2rem;">{{ booking.Category }}</div>
+                            <div class="stat-label" style="font-size: 0.8rem;">Category</div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-6 text-center">
-                        <div class="stat-card bg-warning bg-opacity-10">
-                            <div class="stat-icon text-warning"><i class="fa-solid fa-money-bill-wave"></i></div>
-                            <div class="stat-value text-warning">Rs. {{ "{:,.0f}".format(booking.Total_Price) }}</div>
-                            <div class="stat-label">Total Price</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6 text-center">
+                    <div class="col-md-2 col-4 text-center">
                         <div class="stat-card bg-info bg-opacity-10">
-                            <div class="stat-icon text-info"><i class="fa-solid fa-calendar-alt"></i></div>
-                            <div class="stat-value text-info">{{ booking.Duration_Months }}</div>
-                            <div class="stat-label">Months Plan</div>
+                            <div class="stat-icon text-info" style="font-size: 1.8rem;"><i class="fa-solid fa-calendar-alt"></i></div>
+                            <div class="stat-value text-info" style="font-size: 1.2rem;">{{ booking.Duration_Months }}</div>
+                            <div class="stat-label" style="font-size: 0.8rem;">Months Plan</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4 text-center">
+                        <div class="stat-card bg-warning bg-opacity-10">
+                            <div class="stat-icon text-warning" style="font-size: 1.8rem;"><i class="fa-solid fa-money-bill-wave"></i></div>
+                            <div class="stat-value text-warning" style="font-size: 1.2rem;">Rs. {{ "{:,.0f}".format(booking.Total_Price) }}</div>
+                            <div class="stat-label" style="font-size: 0.8rem;">Total Price</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4 text-center">
+                        <div class="stat-card bg-success bg-opacity-10">
+                            <div class="stat-icon text-success" style="font-size: 1.8rem;"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="stat-value text-success" style="font-size: 1.2rem;">Rs. {{ "{:,.0f}".format(booking.Total_Paid) }}</div>
+                            <div class="stat-label" style="font-size: 0.8rem;">Total Paid</div>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4 text-center">
+                        <div class="stat-card bg-danger bg-opacity-10">
+                            <div class="stat-icon text-danger" style="font-size: 1.8rem;"><i class="fa-solid fa-scale-balanced"></i></div>
+                            <div class="stat-value text-danger" style="font-size: 1.2rem;">Rs. {{ "{:,.0f}".format(booking.Total_Price - booking.Total_Paid) }}</div>
+                            <div class="stat-label" style="font-size: 0.8rem;">Remaining</div>
                         </div>
                     </div>
                 </div>
@@ -132,6 +146,7 @@
                         <h5 class="fw-bold mb-3"><i class="fa-solid fa-plus-circle me-2 text-success"></i>Submit New Payment</h5>
                         <div class="card border-0 shadow-sm p-3">
                             <form action="/submit_payment" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <input type="hidden" name="booking_id" value="{{ booking.Booking_ID }}">
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Amount (Rs.)</label>

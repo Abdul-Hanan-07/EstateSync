@@ -1,5 +1,40 @@
 {% extends 'base.html' %}
 {% block title %}System Audit Logs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
+<style>
+    .dataTables_wrapper .dataTables_filter {
+        padding: 15px;
+        text-align: right;
+    }
+    .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_info {
+        padding: 15px;
+    }
+    .dataTables_wrapper .dataTables_paginate {
+        padding: 15px;
+        text-align: right;
+    }
+    body[data-bs-theme="dark"] .dataTables_wrapper {
+        color: #f9fafb !important;
+    }
+    body[data-bs-theme="dark"] .page-link {
+        background-color: #1f2937 !important;
+        border-color: #374151 !important;
+        color: #d1d5db !important;
+    }
+    body[data-bs-theme="dark"] .page-item.active .page-link {
+        background-color: #15915a !important;
+        border-color: #15915a !important;
+        color: white !important;
+    }
+    body[data-bs-theme="dark"] .form-select-sm, body[data-bs-theme="dark"] .form-control-sm {
+        background-color: #1f2937 !important;
+        color: white !important;
+        border-color: #374151 !important;
+    }
+</style>
+{% endblock %}
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -11,13 +46,14 @@
     
     <div class="card shadow-sm">
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover" id="auditTable">
                 <thead class="table-dark">
                     <tr>
                         <th>Timestamp</th>
                         <th>User ID</th>
                         <th>Action</th>
                         <th>Table</th>
+                        <th>Old Value</th>
                         <th>New Value</th>
                     </tr>
                 </thead>
@@ -32,11 +68,12 @@
                             </span>
                         </td>
                         <td>{{ log.Table_Affected }}</td>
+                        <td>{{ log.Old_Value }}</td>
                         <td>{{ log.New_Value }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center py-4 text-secondary">
+                        <td colspan="6" class="text-center py-4 text-secondary">
                             <i class="fa-solid fa-circle-info me-2"></i>No audit logs recorded yet.
                         </td>
                     </tr>
@@ -46,4 +83,22 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#auditTable').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [10, 25, 50, 100],
+        "order": [[ 0, "desc" ]],
+        "language": {
+            "searchPlaceholder": "Search logs..."
+        }
+    });
+});
+</script>
 {% endblock %}

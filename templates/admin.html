@@ -3,7 +3,43 @@
 {% block title %}Admin Dashboard | EstateSync{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
 <style>
+    /* Styling overrides for DataTables search and paging */
+    .dataTables_wrapper .dataTables_filter {
+        padding: 15px;
+        text-align: right;
+    }
+    .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_info {
+        padding: 15px;
+    }
+    .dataTables_wrapper .dataTables_paginate {
+        padding: 15px;
+        text-align: right;
+    }
+    body[data-bs-theme="dark"] .dataTables_wrapper {
+        color: #f9fafb !important;
+    }
+    body[data-bs-theme="dark"] .page-link {
+        background-color: #1f2937 !important;
+        border-color: #374151 !important;
+        color: #d1d5db !important;
+    }
+    body[data-bs-theme="dark"] .page-item.active .page-link {
+        background-color: #15915a !important;
+        border-color: #15915a !important;
+        color: white !important;
+    }
+    body[data-bs-theme="dark"] .form-select-sm {
+        background-color: #1f2937 !important;
+        color: white !important;
+        border-color: #374151 !important;
+    }
+    body[data-bs-theme="dark"] .form-control-sm {
+        background-color: #1f2937 !important;
+        color: white !important;
+        border-color: #374151 !important;
+    }
     .admin-header {
         background: linear-gradient(135deg, #1f2937, #111827);
         color: white;
@@ -89,6 +125,42 @@
         </div>
     </div>
 
+    {% if block_summary %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card section-card">
+                <div class="section-header" style="background: #10b981;">
+                    <i class="fa-solid fa-chart-pie me-2"></i>Block Summary & Revenue Analytics (SQL View)
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Block Name</th>
+                                <th>Sector Type</th>
+                                <th>Total Plots</th>
+                                <th>Sold Plots</th>
+                                <th>Total Revenue Collected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in block_summary %}
+                            <tr>
+                                <td class="fw-bold">Block {{ row.Block_Name }}</td>
+                                <td>{{ row.Sector_Type }}</td>
+                                <td>{{ row.Total_Plots }}</td>
+                                <td>{{ row.Sold_Plots }}</td>
+                                <td class="fw-bold text-success">Rs. {{ "{:,.0f}".format(row.Total_Revenue_Collected) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row g-4">
         <div class="col-12">
             <div class="card section-card">
@@ -96,7 +168,7 @@
                     <i class="fa-solid fa-clock me-2"></i>Pending Payment Approvals
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0" id="paymentsTable">
                         <thead class="table-dark">
                             <tr>
                                 <th>Payment ID</th>
@@ -114,18 +186,20 @@
                             <tr>
                                 <td class="fw-bold">#{{ pay.Payment_ID }}</td>
                                 <td>{{ pay.Full_Name }}</td>
-                                <td>{{ pay.CNIC }}</td>
+                                <td>{{ pay.CNIC[:5] }}*******{{ pay.CNIC[-1:] }}</td>
                                 <td class="fw-bold text-success">Rs. {{ "{:,.0f}".format(pay.Amount_Paid) }}</td>
                                 <td>{{ pay.Payment_Mode|replace('_', ' ') }}</td>
                                 <td><code>{{ pay.Receipt_Number }}</code></td>
                                 <td><span class="badge bg-warning text-dark">Pending</span></td>
                                 <td>
                                     <form action="/approve_payment/{{ pay.Payment_ID }}" method="POST" style="display:inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-approve text-white" title="Approve">
                                             <i class="fa-solid fa-check"></i>
                                         </button>
                                     </form>
                                     <form action="/reject_payment/{{ pay.Payment_ID }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to REJECT this payment?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-danger text-white ms-1" title="Reject">
                                             <i class="fa-solid fa-xmark"></i>
                                         </button>
@@ -151,7 +225,7 @@
                     <i class="fa-solid fa-envelope-open-text me-2"></i>Contact Messages
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0" id="messagesTable">
                         <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
@@ -191,7 +265,7 @@
                     <i class="fa-solid fa-users-gear me-2"></i>Registered Users & Member Details
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0" id="usersTable">
                         <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
@@ -215,7 +289,7 @@
                                 
                                 <td>
                                     {% if user.CNIC %}
-                                        <div class="small"><i class="fa-solid fa-id-card text-secondary me-1"></i> {{ user.CNIC }}</div>
+                                        <div class="small"><i class="fa-solid fa-id-card text-secondary me-1"></i> {{ user.CNIC[:5] }}*******{{ user.CNIC[-1:] }}</div>
                                         <div class="small"><i class="fa-solid fa-phone text-secondary me-1"></i> {{ user.Phone_Number }}</div>
                                     {% else %}
                                         <span class="text-muted">-</span>
@@ -240,4 +314,37 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#paymentsTable').DataTable({
+        "pageLength": 5,
+        "lengthMenu": [5, 10, 25, 50],
+        "order": [[ 0, "desc" ]],
+        "language": {
+            "searchPlaceholder": "Search payments..."
+        }
+    });
+    $('#messagesTable').DataTable({
+        "pageLength": 5,
+        "lengthMenu": [5, 10, 25, 50],
+        "order": [[ 0, "desc" ]],
+        "language": {
+            "searchPlaceholder": "Search messages..."
+        }
+    });
+    $('#usersTable').DataTable({
+        "pageLength": 5,
+        "lengthMenu": [5, 10, 25, 50],
+        "language": {
+            "searchPlaceholder": "Search users..."
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -244,7 +244,7 @@ CREATE TABLE `users` (
   `User_ID` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
   `Password` varchar(255) NOT NULL,
-  `Role` varchar(20) NOT NULL
+  `Role` enum('Admin','Resident') NOT NULL DEFAULT 'Resident'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Inserting encrypted user credentials for login
@@ -269,7 +269,7 @@ ALTER TABLE `blocks`
 
 ALTER TABLE `bookings`
   ADD PRIMARY KEY (`Booking_ID`),
-  ADD UNIQUE KEY `Plot_ID` (`Plot_ID`),
+  ADD KEY `idx_plot_id` (`Plot_ID`),
   ADD KEY `Member_ID` (`Member_ID`),
   ADD KEY `Plan_ID` (`Plan_ID`);
 
@@ -305,6 +305,9 @@ ALTER TABLE `service_bills`
 ALTER TABLE `users`
   ADD PRIMARY KEY (`User_ID`),
   ADD UNIQUE KEY `Email` (`Email`);
+
+ALTER TABLE `audit_logs`
+  ADD KEY `idx_audit_user` (`User_ID`);
 
 
 -- Setting Auto-Increment counters for Primary Keys
@@ -360,6 +363,152 @@ ALTER TABLE `plots`
 ALTER TABLE `service_bills`
   ADD CONSTRAINT `service_bills_ibfk_1` FOREIGN KEY (`Plot_ID`) REFERENCES `plots` (`Plot_ID`),
   ADD CONSTRAINT `service_bills_ibfk_2` FOREIGN KEY (`Service_ID`) REFERENCES `maintenance_services` (`Service_ID`);
+
+ALTER TABLE `audit_logs`
+  ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`User_ID`) REFERENCES `users` (`User_ID`) ON DELETE SET NULL;
+
+-- Performance indexes for frequently queried columns
+ALTER TABLE `payments`
+  ADD KEY `idx_payment_status` (`Status`);
+
+ALTER TABLE `plots`
+  ADD KEY `idx_plot_status` (`Status`);
+
+ALTER TABLE `bookings`
+  ADD KEY `idx_booking_status` (`Booking_Status`);
+
+-- ==============================================================================
+-- PART 3: DATABASE TRIGGERS FOR AUTOMATIC AUDIT LOGGING
+-- ==============================================================================
+
+DELIMITER //
+
+-- Trigger: Automatically logs when a new booking is created
+CREATE TRIGGER trg_booking_insert
+AFTER INSERT ON bookings
+FOR EACH ROW
+BEGIN
+    INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
+    VALUES (NULL, 'INSERT', 'BOOKINGS', 'None', CONCAT('Booking ID ', NEW.Booking_ID, ' for Plot ID ', NEW.Plot_ID), NOW());
+END //
+
+-- Trigger: Automatically logs when a payment status changes
+CREATE TRIGGER trg_payment_update
+AFTER UPDATE ON payments
+FOR EACH ROW
+BEGIN
+    IF OLD.Status != NEW.Status THEN
+        INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
+        VALUES (NULL, 'UPDATE', 'PAYMENTS', OLD.Status, NEW.Status, NOW());
+    END IF;
+END //
+
+-- Trigger: Automatically logs when a plot status changes
+CREATE TRIGGER trg_plot_update
+AFTER UPDATE ON plots
+FOR EACH ROW
+BEGIN
+    IF OLD.Status != NEW.Status THEN
+        INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
+        VALUES (NULL, 'UPDATE', 'PLOTS', OLD.Status, NEW.Status, NOW());
+    END IF;
+END //
+
+-- Trigger: Automatically logs when a service bill is paid
+CREATE TRIGGER trg_service_bill_update
+AFTER UPDATE ON service_bills
+FOR EACH ROW
+BEGIN
+    IF OLD.Issue_Status != NEW.Issue_Status THEN
+        INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
+        VALUES (NULL, 'UPDATE', 'SERVICE_BILLS', OLD.Issue_Status, NEW.Issue_Status, NOW());
+    END IF;
+END //
+
+DELIMITER ;
+
+-- ==============================================================================
+-- PART 4: VIEWS FOR COMPACT AND USEFUL REPORTING
+-- ==============================================================================
+
+-- View: Society financial revenue summary by block
+CREATE OR REPLACE VIEW view_society_revenue_summary AS
+SELECT 
+    b.Block_Name,
+    b.Sector_Type,
+    COUNT(p.Plot_ID) AS Total_Plots,
+    SUM(CASE WHEN p.Status = 'SOLD' THEN 1 ELSE 0 END) AS Sold_Plots,
+    COALESCE(SUM(pm.Amount_Paid), 0) AS Total_Revenue_Collected
+FROM blocks b
+LEFT JOIN plots p ON b.Block_ID = p.Block_ID
+LEFT JOIN bookings bk ON p.Plot_ID = bk.Plot_ID AND bk.Booking_Status = 'ACTIVE'
+LEFT JOIN payments pm ON bk.Booking_ID = pm.Booking_ID AND pm.Status = 'Approved'
+GROUP BY b.Block_ID, b.Block_Name, b.Sector_Type;
+
+-- View: Detailed booking audit sheet for admin dashboard
+CREATE OR REPLACE VIEW view_active_bookings_details AS
+SELECT 
+    bk.Booking_ID,
+    bk.Booking_Date,
+    m.Full_Name AS Member_Name,
+    m.CNIC AS Member_CNIC,
+    p.Plot_Number,
+    b.Block_Name,
+    p.Size_Marla,
+    p.Category AS Plot_Category,
+    p.Total_Price,
+    ip.Plan_Name AS Payment_Plan,
+    COALESCE(SUM(pm.Amount_Paid), 0) AS Approved_Amount_Paid,
+    (p.Total_Price - COALESCE(SUM(pm.Amount_Paid), 0)) AS Remaining_Balance
+FROM bookings bk
+JOIN plots p ON bk.Plot_ID = p.Plot_ID
+JOIN blocks b ON p.Block_ID = b.Block_ID
+JOIN members m ON bk.Member_ID = m.Member_ID
+JOIN installment_plans ip ON bk.Plan_ID = ip.Plan_ID
+LEFT JOIN payments pm ON bk.Booking_ID = pm.Booking_ID AND pm.Status = 'Approved'
+WHERE bk.Booking_Status = 'ACTIVE'
+GROUP BY bk.Booking_ID;
+
+-- ==============================================================================
+-- PART 5: STORED PROCEDURES FOR TRANSACTIONAL OPERATIONS
+-- ==============================================================================
+
+DELIMITER //
+
+-- Procedure to safely book a plot and mark it sold in a transaction
+CREATE PROCEDURE sp_book_plot(
+    IN p_plot_id INT,
+    IN p_member_id INT,
+    IN p_plan_id INT,
+    OUT p_success BOOLEAN
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SET p_success = FALSE;
+    END;
+
+    START TRANSACTION;
+
+    -- Check availability
+    IF (SELECT Status FROM plots WHERE Plot_ID = p_plot_id) = 'AVAILABLE' THEN
+        -- Insert booking
+        INSERT INTO bookings (Plot_ID, Member_ID, Plan_ID, Booking_Date, Booking_Status)
+        VALUES (p_plot_id, p_member_id, p_plan_id, CURDATE(), 'ACTIVE');
+
+        -- Update plot status
+        UPDATE plots SET Status = 'SOLD' WHERE Plot_ID = p_plot_id;
+
+        COMMIT;
+        SET p_success = TRUE;
+    ELSE
+        ROLLBACK;
+        SET p_success = FALSE;
+    END IF;
+END //
+
+DELIMITER ;
 
 -- Committing the transaction
 COMMIT;

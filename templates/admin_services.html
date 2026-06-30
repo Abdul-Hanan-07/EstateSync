@@ -34,6 +34,7 @@
                 <div class="section-header bg-dark"><i class="fa-solid fa-plus-circle me-2"></i>Generate New Bill</div>
                 <div class="card-body">
                     <form action="/generate_bill" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Select Resident & Plot</label>
                             <select name="plot_id" class="form-select" required>
@@ -45,10 +46,10 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Select Service</label>
-                            <select name="service_id" class="form-select" required>
+                            <select name="service_id" id="serviceSelect" class="form-select" required>
                                 <option value="" disabled selected>-- Choose Service --</option>
                                 {% for srv in services %}
-                                <option value="{{ srv.Service_ID }}">{{ srv.Service_Name }} (Rs. {{ srv.Monthly_Rate }})</option>
+                                <option value="{{ srv.Service_ID }}" data-rate="{{ srv.Monthly_Rate }}">{{ srv.Service_Name }} (Rs. {{ srv.Monthly_Rate|int }})</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -62,7 +63,7 @@
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold">Amount (Rs.)</label>
-                            <input type="number" name="amount" class="form-control" placeholder="Enter amount" required>
+                            <input type="number" name="amount" id="amountInput" class="form-control" placeholder="Enter amount" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="fa-solid fa-paper-plane me-2"></i>Send Bill to Resident</button>
                     </form>
@@ -116,4 +117,16 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('serviceSelect').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const rate = selectedOption.getAttribute('data-rate');
+        if (rate) {
+            document.getElementById('amountInput').value = Math.round(parseFloat(rate));
+        }
+    });
+</script>
 {% endblock %}
