@@ -1,11 +1,11 @@
 import os
-from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, flash, session, jsonify, url_for
-import mysql.connector
+from dotenv import load_dotenv  # type: ignore
+from flask import Flask, render_template, request, redirect, flash, session, jsonify, url_for  # type: ignore
+import mysql.connector  # type: ignore
 from functools import wraps
 import random
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_wtf.csrf import CSRFProtect
+from werkzeug.security import generate_password_hash, check_password_hash  # type: ignore
+from flask_wtf.csrf import CSRFProtect  # type: ignore
 
 load_dotenv()
 
