@@ -378,54 +378,13 @@ ALTER TABLE `bookings`
   ADD KEY `idx_booking_status` (`Booking_Status`);
 
 -- ==============================================================================
--- PART 3: DATABASE TRIGGERS FOR AUTOMATIC AUDIT LOGGING
+-- PART 3: (removed) AUDIT LOGGING IS HANDLED AT THE APPLICATION LAYER
 -- ==============================================================================
-
-DELIMITER //
-
--- Trigger: Automatically logs when a new booking is created
-CREATE TRIGGER trg_booking_insert
-AFTER INSERT ON bookings
-FOR EACH ROW
-BEGIN
-    INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
-    VALUES (NULL, 'INSERT', 'BOOKINGS', 'None', CONCAT('Booking ID ', NEW.Booking_ID, ' for Plot ID ', NEW.Plot_ID), NOW());
-END //
-
--- Trigger: Automatically logs when a payment status changes
-CREATE TRIGGER trg_payment_update
-AFTER UPDATE ON payments
-FOR EACH ROW
-BEGIN
-    IF OLD.Status != NEW.Status THEN
-        INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
-        VALUES (NULL, 'UPDATE', 'PAYMENTS', OLD.Status, NEW.Status, NOW());
-    END IF;
-END //
-
--- Trigger: Automatically logs when a plot status changes
-CREATE TRIGGER trg_plot_update
-AFTER UPDATE ON plots
-FOR EACH ROW
-BEGIN
-    IF OLD.Status != NEW.Status THEN
-        INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
-        VALUES (NULL, 'UPDATE', 'PLOTS', OLD.Status, NEW.Status, NOW());
-    END IF;
-END //
-
--- Trigger: Automatically logs when a service bill is paid
-CREATE TRIGGER trg_service_bill_update
-AFTER UPDATE ON service_bills
-FOR EACH ROW
-BEGIN
-    IF OLD.Issue_Status != NEW.Issue_Status THEN
-        INSERT INTO audit_logs (User_ID, Action_Type, Table_Affected, Old_Value, New_Value, Timestamp)
-        VALUES (NULL, 'UPDATE', 'SERVICE_BILLS', OLD.Issue_Status, NEW.Issue_Status, NOW());
-    END IF;
-END //
-
-DELIMITER ;
+-- Audit logging used to be duplicated here via AFTER INSERT/UPDATE triggers on
+-- bookings/payments/plots/service_bills. That produced two audit_logs rows per
+-- action (one from app.py's log_audit() with the correct User_ID, one from the
+-- trigger with User_ID always NULL since triggers can't see the Flask session).
+-- Audit logging is now handled exclusively by log_audit() in app.py.
 
 -- ==============================================================================
 -- PART 4: VIEWS FOR COMPACT AND USEFUL REPORTING

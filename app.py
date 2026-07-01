@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from dotenv import load_dotenv  # type: ignore
 from flask import Flask, render_template, request, redirect, flash, session, jsonify, url_for  # type: ignore
 import mysql.connector  # type: ignore
@@ -13,6 +14,14 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
 csrf = CSRFProtect(app)
+
+MIN_PASSWORD_LENGTH = 8
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCKOUT_MINUTES = 5
+# in-memory login attempt tracker: email -> {'count': int, 'locked_until': datetime|None}
+# resets on app restart and isn't shared across multiple worker processes,
+# but is enough to slow down naive brute-force attempts for this project's scale
+login_attempts = {}
 
 # db connection setup
 def get_db_connection():
@@ -115,6 +124,7 @@ def request_booking():
             
         if is_success:
             conn.commit()
+            log_audit(session.get('user_id'), 'INSERT', 'BOOKINGS', 'None', f'Plot {plot_id} booked')
             flash("Plot successfully booked!", "success")
             return redirect('/resident')
         else:
@@ -146,7 +156,6 @@ def reject_payment(payment_id):
     return redirect('/admin')
 
 # update plot status
-@csrf.exempt
 @app.route('/update_plot/<int:plot_id>', methods=['POST'])
 @admin_required
 def update_plot(plot_id):
@@ -333,17 +342,33 @@ def approve_payment(payment_id):
 def login():
     if request.method == 'POST':
         email, password, role = request.form['email'], request.form['password'], request.form['role']
+
+        # block login attempts while locked out from too many recent failures
+        attempt = login_attempts.get(email)
+        if attempt and attempt['locked_until'] and datetime.now() < attempt['locked_until']:
+            wait_minutes = int((attempt['locked_until'] - datetime.now()).total_seconds() // 60) + 1
+            flash(f"Too many failed login attempts. Try again in {wait_minutes} minute(s).", "danger")
+            return render_template('login.html')
+
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute('SELECT * FROM USERS WHERE Email = %s AND Role = %s', (email, role))
         user = cursor.fetchone()
         cursor.close()
         conn.close()
-        
+
         # checking the hashed password
         if user and check_password_hash(user['Password'], password):
+            login_attempts.pop(email, None)
             session.update({'loggedin': True, 'user_id': user['User_ID'], 'email': email, 'role': role})
             return redirect('/admin' if role == 'Admin' else '/resident')
+
+        # track the failed attempt and lock out after too many
+        attempt = login_attempts.setdefault(email, {'count': 0, 'locked_until': None})
+        attempt['count'] += 1
+        if attempt['count'] >= MAX_LOGIN_ATTEMPTS:
+            attempt['locked_until'] = datetime.now() + timedelta(minutes=LOGIN_LOCKOUT_MINUTES)
+            attempt['count'] = 0
         flash("Invalid credentials.", "danger")
     return render_template('login.html')
 
@@ -563,6 +588,10 @@ def signup():
         phone = request.form.get('phone', '')
         address = request.form.get('address', '')
 
+        if not password or len(password) < MIN_PASSWORD_LENGTH:
+            flash(f"Password must be at least {MIN_PASSWORD_LENGTH} characters long.", "danger")
+            return redirect('/signup')
+
         # hash the password securely
         hashed_pw = generate_password_hash(password)
         conn = get_db_connection()
@@ -640,4 +669,5 @@ def view_audit_logs():
     return render_template('audit.html', logs=logs)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode)
